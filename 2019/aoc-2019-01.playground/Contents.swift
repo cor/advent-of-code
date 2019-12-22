@@ -1,5 +1,7 @@
 import UIKit
 
+// FIRST HALF
+
 func moduleFuel (moduleMass: Int) -> Int {
     return moduleMass / 3 - 2
 }
@@ -114,5 +116,20 @@ let moduleMasses = [
     126543
 ]
 
-// Challange Answer
+// First Half Answer
 moduleMasses.map(moduleFuel).reduce(0, +)
+
+// SECOND HALF
+func recursiveModuleFuel (moduleMass: Int) -> Int {
+    let fuel = moduleFuel(moduleMass: moduleMass)
+    if fuel < 0 { return 0 } // base case
+    return fuel + recursiveModuleFuel(moduleMass: fuel) // recursive case
+}
+
+// Example Input
+recursiveModuleFuel(moduleMass: 14)
+recursiveModuleFuel(moduleMass: 1969)
+recursiveModuleFuel(moduleMass: 100756)
+
+// Second Half Answer
+moduleMasses.map(recursiveModuleFuel).reduce(0, +)
