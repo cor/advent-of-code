@@ -49,3 +49,6 @@ playground.xcworkspace
 
 .build/
 
+# Vim
+
+.swp
