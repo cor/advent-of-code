@@ -41,6 +41,17 @@ extension Int {
     func digits(_ amount: Int) -> Int {
         return self % (10 ^^ amount)
     }
+    
+    var boolValue: Bool {
+        return self != 0
+    }
+}
+
+
+extension Bool {
+    var intValue: Int {
+        return self ? 1 : 0
+    }
 }
 
 // MARK: - Intcode computer
@@ -75,27 +86,26 @@ extension Int {
             
         // MARK: Input
         case 3:
-            let outputAddress = program[IP + 1]
+            let parameters = decodeParameters(program, IP, amount: 1, raw: [0])
     
-            // TEMP
             var userInput: Int? = nil
             
             for i in (1...5).reversed() {
-                if (userInput == nil) {
-                    if let inputString = readLine() {
-                        if let inputInt = Int(inputString) {
-                            userInput = inputInt
-                        } else if i > 1 {
-                            print("[INTCODE] Please input an Integer. \(i - 1) attempts left")
-                        }
-                    } else {
-                        print("[INTCODE] ERROR: Could not get input from readLine(). Are you running from a playground?")
+                if let inputString = readLine() {
+                    if let inputInt = Int(inputString) {
+                        userInput = inputInt
+                        break
+                    } else if i > 1 {
+                        print("[INTCODE] Please input an Integer. \(i - 1) attempts left")
                     }
+                } else {
+                    print("[INTCODE] ERROR: Could not get input from readLine(). Are you running from a playground?")
                 }
             }
+            
 
             if let input = userInput {
-                program[outputAddress] = input
+                program[parameters[0]] = input
             } else {
                 print("[INTCODE] ERROR: Did not receive valid user input")
                 running = false
@@ -105,43 +115,44 @@ extension Int {
     
         // MARK: Output
         case 4:
-            let input = program[IP + 1]
-            
-            print(program[input])
+            let parameters = decodeParameters(program, IP, amount: 1, raw: [0])
+
+            print(program[parameters[0]])
             
             IP += 2
             
-//        // MARK: Jump-if-true
-//        case 5:
-//            let input1 = program[instructionPointer + 1]
-//            let input2 = program[instructionPointer + 2]
-//
-//            let parameter1 = opcode.digit(2) == 1 ? input1 : program[input1]
-//            let parameter2 = opcode.digit(3) == 1 ? input2 : program[input2]
-//
-//
-//            if parameter1 != 0 {
-//                instructionPointer = parameter2 // Jump
-//            } else {
-//                instructionPointer += 3
-//            }
-//
-//
-//        // MARK: Jump-if-false
-//        case 6:
-//            let input1 = program[instructionPointer + 1]
-//            let input2 = program[instructionPointer + 2]
-//
-//            let parameter1 = opcode.digit(2) == 1 ? input1 : program[input1]
-//            let parameter2 = opcode.digit(3) == 1 ? input2 : program[input2]
-//
-//
-//            if parameter1 == 0 {
-//                instructionPointer = parameter2 // Jump
-//            } else {
-//                instructionPointer += 3
-//            }
-//
+        // MARK: Jump-if-true
+        case 5:
+            let parameters = decodeParameters(program, IP, amount: 2)
+
+            let shouldJump = parameters[0] != 0
+            
+            IP = shouldJump ? parameters[1] : IP + 3
+            
+
+        // MARK: Jump-if-false
+        case 6:
+            let parameters = decodeParameters(program, IP, amount: 2)
+
+            let shouldJump = parameters[0] == 0
+            
+            IP = shouldJump ? parameters[1] : IP + 3
+            
+        // MARK: less than
+        case 7:
+            let parameters = decodeParameters(program, IP, amount: 3, raw: [2])
+            
+            program[parameters[2]] = (parameters[0] < parameters[1]).intValue
+            
+            IP += 4
+            
+        // MARK: equals
+        case 8:
+            let parameters = decodeParameters(program, IP, amount: 3, raw: [2])
+            
+            program[parameters[2]] = (parameters[0] == parameters[1]).intValue
+            
+            IP += 4
             
         // MARK: Exit
         case 99:
@@ -157,15 +168,15 @@ extension Int {
     return program
 }
 
-func decodeParameters(_ program: IntcodeProgram, _ IP: Int, amount: Int, raw: [Int]) -> [Int] {
-    return (1...amount).map { i in
-        let input = program[IP + i]
+func decodeParameters(_ program: IntcodeProgram, _ IP: Int, amount: Int, raw: [Int] = []) -> [Int] {
+    return (0..<amount).map { i in
         
-        if program[IP].digit(i + 1) == 1 {
-            // Immediate mode
-            return input
-        } else if raw.contains(i - 1) {
-            // Raw input
+        let input = program[IP + 1 + i]
+        
+        let immediateMode = program[IP].digit(i + 2) == 1
+        let rawMode = raw.contains(i)
+        
+        if immediateMode || rawMode {
             return input
         } else {
             return program[input]
@@ -178,7 +189,5 @@ let challangeProgram = [3, 225, 1, 225, 6, 6, 1100, 1, 238, 225, 104, 0, 1001, 1
 
 
 
-executeIntcode(program: [1101, 100, -1, 4, 0])
-
-// First Half Answer
+// First Half Answer: enter 1. Second Half Answer: enter 2
 executeIntcode(program: challangeProgram)
