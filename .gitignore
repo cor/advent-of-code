@@ -51,4 +51,10 @@ playground.xcworkspace
 
 # Vim
 
+
+## Rust
+
+/target
+**/target
+
 .swp
