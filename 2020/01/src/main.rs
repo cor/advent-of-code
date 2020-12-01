@@ -19,11 +19,24 @@ fn find_answer(numbers: Vec<i64>) -> Option<i64> {
     return None;
 }
 
+fn find_answer_part2(numbers: Vec<i64>) -> Option<i64> {
+    for element1 in numbers.iter() {
+        for element2 in numbers.iter() {
+            for element3 in numbers.iter() {
+                if element1 + element2 + element3 == 2020 {
+                    return Some(element1 * element2 * element3);
+                }
+            }
+        }
+    }
+    return None;
+}
+
 fn main() {
     let file = File::open("./input/01.txt").expect("Failed to open file");
     let numbers = read_numbers(file).expect("Failed to parse file");
 
-    match find_answer(numbers) {
+    match find_answer_part2(numbers) {
         Some(n) => println!("{}", n),
         None => println!("Input doesn't contain solution"),
     }
