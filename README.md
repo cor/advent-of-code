@@ -2,7 +2,7 @@
 These are my [Advent of Code](https://adventofcode.com) solutions. 
 
 ## 2020
-I'm doing the challanges in *Rust* this year.
+I'm doing the challanges in *Rust* this year in order to learn the language. Don't expect idiomatic solutions 😅
 
 
 ## 2019
