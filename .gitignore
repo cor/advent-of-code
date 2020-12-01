@@ -49,6 +49,10 @@ playground.xcworkspace
 
 .build/
 
+.idea/
+.idea/*
+**/.idea/
+
 # Vim
 
 

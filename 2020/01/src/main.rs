@@ -1,6 +1,9 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error, ErrorKind, Read};
 
+#[macro_use]
+extern crate itertools;
+
 fn read_numbers<R: Read>(io: R) -> Result<Vec<i64>, Error> {
     let br = BufReader::new(io);
     br.lines()
@@ -9,24 +12,19 @@ fn read_numbers<R: Read>(io: R) -> Result<Vec<i64>, Error> {
 }
 
 fn find_answer(numbers: Vec<i64>) -> Option<i64> {
-    for element1 in numbers.iter() {
-        for element2 in numbers.iter() {
-            if element1 + element2 == 2020 {
-                return Some(element1 * element2);
-            }
+    for (i, j) in iproduct!(&numbers, &numbers) {
+        if i + j == 2020 {
+            return Some(i * j);
         }
     }
+
     return None;
 }
 
 fn find_answer_part2(numbers: Vec<i64>) -> Option<i64> {
-    for element1 in numbers.iter() {
-        for element2 in numbers.iter() {
-            for element3 in numbers.iter() {
-                if element1 + element2 + element3 == 2020 {
-                    return Some(element1 * element2 * element3);
-                }
-            }
+    for (i, j, k) in iproduct!(&numbers, &numbers, &numbers) {
+        if i + j + k == 2020 {
+            return Some(i * j);
         }
     }
     return None;
