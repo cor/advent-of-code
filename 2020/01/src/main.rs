@@ -17,12 +17,11 @@ fn find_answer(numbers: Vec<i64>) -> Option<i64> {
             return Some(i * j);
         }
     }
-
     return None;
 }
 
-fn find_answer_part2(numbers: Vec<i64>) -> Option<i64> {
-    for (i, j, k) in iproduct!(&numbers, &numbers, &numbers) {
+fn find_answer_part2(numbers: impl Iterator<Item = i64> + Copy) -> Option<i64> {
+    for (i, j, k) in iproduct!(numbers, numbers, numbers) {
         if i + j + k == 2020 {
             return Some(i * j);
         }
@@ -34,7 +33,7 @@ fn main() {
     let file = File::open("./input/01.txt").expect("Failed to open file");
     let numbers = read_numbers(file).expect("Failed to parse file");
 
-    match find_answer_part2(numbers) {
+    match find_answer_part2(numbers.into_iter()) {
         Some(n) => println!("{}", n),
         None => println!("Input doesn't contain solution"),
     }
