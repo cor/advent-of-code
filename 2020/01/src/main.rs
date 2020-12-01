@@ -20,8 +20,8 @@ fn find_answer(numbers: Vec<i64>) -> Option<i64> {
     return None;
 }
 
-fn find_answer_part2(numbers: impl Iterator<Item = i64> + Copy) -> Option<i64> {
-    for (i, j, k) in iproduct!(numbers, numbers, numbers) {
+fn find_answer_part2(numbers: impl Iterator<Item = i64> + Clone) -> Option<i64> {
+    for (i, j, k) in iproduct!(numbers.clone(), numbers.clone(), numbers) {
         if i + j + k == 2020 {
             return Some(i * j);
         }
