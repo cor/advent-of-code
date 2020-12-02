@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error, Read};
 
-
 fn read_lines<R: Read>(io: R) -> Result<Vec<String>, Error> {
     BufReader::new(io).lines().collect()
 }
@@ -42,23 +41,19 @@ impl PasswordTest<'_> {
             password: line[1],
         }
     }
-
 }
 
 fn main() {
+    // Parse input into PasswordTests
     let file = File::open("./input/1.txt").expect("Failed to open file");
     let lines = read_lines(file).expect("Incorrect input");
-
-    // Parse input into PasswordTests
-    let tests: Vec<PasswordTest> = lines.iter()
-        .map(|s| PasswordTest::from_str(s))
-        .collect();
+    let tests = lines.iter().map(|s| PasswordTest::from_str(s));
 
     // Check how many PasswordTests pass
     // NOTE: cannot write the filter call as `.filter(PasswordTest::part1)` because of this known issue:
     // https://users.rust-lang.org/t/explanation-for-difference-between-filter-func-and-filter-x-func-x/14945/5
-    let answer1 = tests.iter().filter(|test| test.part1()).count();
-    let answer2 = tests.iter().filter(|test| test.part2()).count();
+    let answer1 = tests.clone().filter(|test| test.part1()).count();
+    let answer2 = tests.filter(|test| test.part2()).count();
 
     println!("{}", answer1);
     println!("{}", answer2);
