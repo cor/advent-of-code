@@ -38,7 +38,7 @@ fn main() {
     // Check how many PasswordTests pass
     let part1 = tests.iter().filter(|test| {
         let char_count: u64 = test.password.matches(test.character).count() as u64;
-        char_count >= test.lower && char_count <= test.upper
+        (test.lower..(test.upper + 1)).contains(&char_count)
     }).count();
 
     // Check how many PasswordTests pass
@@ -51,5 +51,6 @@ fn main() {
         (chars[lower] == target) ^ (chars[upper] == target)
     }).count();
 
+    println!("{}", part1);
     println!("{}", part2);
 }
