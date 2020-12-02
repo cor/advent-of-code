@@ -28,6 +28,20 @@ impl PasswordTest<'_> {
 
         (chars[lower] == target) ^ (chars[upper] == target)
     }
+
+    fn from_str(s: &str) -> PasswordTest {
+        let line: Vec<&str> = s.split(": ").collect();
+        let requirements: Vec<&str> = line[0].split(' ').collect();
+        let range: Vec<&str> = requirements[0].split('-').collect();
+
+        PasswordTest {
+            lower: range[0].parse().expect("Invalid lower bound in input"),
+            upper: range[1].parse().expect("Invalid upper bound in input"),
+            character: requirements[1].chars().nth(0).expect("Invalid char in input"),
+            password: line[1],
+        }
+    }
+
 }
 
 fn main() {
@@ -36,18 +50,7 @@ fn main() {
 
     // Parse input into PasswordTests
     let tests: Vec<PasswordTest> = lines.iter()
-        .map(|line| line.split(": ").collect())
-        .map(|line : Vec<&str> | {
-            let requirements: Vec<&str> = line[0].split(' ').collect();
-            let range: Vec<&str> = requirements[0].split('-').collect();
-
-            PasswordTest {
-                lower: range[0].parse().expect("Invalid lower bound in input"),
-                upper: range[1].parse().expect("Invalid upper bound in input"),
-                character: requirements[1].chars().nth(0).expect("Invalid char in input"),
-                password: line[1],
-            }
-        })
+        .map(|s| PasswordTest::from_str(s))
         .collect();
 
     // Check how many PasswordTests pass
