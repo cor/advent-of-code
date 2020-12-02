@@ -13,8 +13,25 @@ struct PasswordTest<'a> {
     password: &'a str,
 }
 
+impl PasswordTest<'_> {
+    fn part1(&self) -> bool {
+        let char_count = self.password.matches(self.character).count() as u64;
+
+        (self.lower..(self.upper + 1)).contains(&char_count)
+    }
+
+    fn part2(&self) -> bool {
+        let chars = self.password.as_bytes();
+        let target = self.character as u8;
+        let lower = (self.lower - 1) as usize;
+        let upper = (self.upper - 1) as usize;
+
+        (chars[lower] == target) ^ (chars[upper] == target)
+    }
+}
+
 fn main() {
-    let file = File::open("./input/10.txt").expect("Failed to open file");
+    let file = File::open("./input/1.txt").expect("Failed to open file");
     let lines = read_lines(file).expect("Incorrect input");
 
     // Parse input into PasswordTests
@@ -34,20 +51,8 @@ fn main() {
         .collect();
 
     // Check how many PasswordTests pass
-    let part1 = tests.iter().filter(|test| {
-        let char_count = test.password.matches(test.character).count() as u64;
-        (test.lower..(test.upper + 1)).contains(&char_count)
-    }).count();
-
-    // Check how many PasswordTests pass
-    let part2 = tests.iter().filter(|test| {
-        let chars = test.password.as_bytes();
-        let target = test.character as u8;
-        let lower = (test.lower - 1) as usize;
-        let upper = (test.upper - 1) as usize;
-
-        (chars[lower] == target) ^ (chars[upper] == target)
-    }).count();
+    let part1 = tests.iter().filter(PasswordTest::part1).count();
+    let part2 = tests.iter().filter(PasswordTest::part2).count();
 
     println!("{}", part1);
     println!("{}", part2);
