@@ -14,7 +14,7 @@ struct PasswordTest<'a> {
 }
 
 fn main() {
-    let file = File::open("./input/01.txt").expect("Failed to open file");
+    let file = File::open("./input/10.txt").expect("Failed to open file");
     let lines = read_lines(file).expect("Incorrect input");
 
     // Parse input into PasswordTests
@@ -23,13 +23,11 @@ fn main() {
         .map(|line : Vec<&str> | {
             let requirements: Vec<&str> = line[0].split(' ').collect();
             let range: Vec<&str> = requirements[0].split('-').collect();
-            let character = requirements[1].chars().nth(0)
-                .expect("Invalid char in input");
 
             PasswordTest {
                 lower: range[0].parse().expect("Invalid lower bound in input"),
                 upper: range[1].parse().expect("Invalid upper bound in input"),
-                character,
+                character: requirements[1].chars().nth(0).expect("Invalid char in input"),
                 password: line[1],
             }
         })
@@ -37,7 +35,7 @@ fn main() {
 
     // Check how many PasswordTests pass
     let part1 = tests.iter().filter(|test| {
-        let char_count: u64 = test.password.matches(test.character).count() as u64;
+        let char_count = test.password.matches(test.character).count() as u64;
         (test.lower..(test.upper + 1)).contains(&char_count)
     }).count();
 
