@@ -51,8 +51,8 @@ fn main() {
         .collect();
 
     // Check how many PasswordTests pass
-    let part1 = tests.iter().filter(PasswordTest::part1).count();
-    let part2 = tests.iter().filter(PasswordTest::part2).count();
+    let part1 = tests.iter().filter(|test| test.part1()).count();
+    let part2 = tests.iter().filter(|test| test.part2()).count();
 
     println!("{}", part1);
     println!("{}", part2);
