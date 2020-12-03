@@ -69,10 +69,10 @@ impl World {
         let mut source = Vec::with_capacity(width * height);
 
         for line in lines {
-            for square in line.as_bytes() {
+            for square in line.chars() {
                 let square = match square {
-                    b'.' => Square::Open,
-                    b'#' => Square::Tree,
+                    '.' => Square::Open,
+                    '#' => Square::Tree,
                     _    => panic!("Invalid character in input"),
                 };
                 source.push(square);
