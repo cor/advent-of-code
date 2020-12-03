@@ -11,6 +11,13 @@ struct World {
     source: Vec<Square>,
 }
 
+impl World {
+    fn square_at(&self, x: usize, y: usize) -> &Square {
+        let x = x % self.width; // repeat to the right
+        &self.source[x + y * self.width]
+    }
+}
+
 #[derive(Debug)]
 enum Square {
     Open,
@@ -49,5 +56,5 @@ fn main() {
 
     let world = World::from_lines(&lines);
 
-    println!("{:?}", world.source);
+    println!("{:#?}", world.square_at(36, 5));
 }
