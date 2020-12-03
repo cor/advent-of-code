@@ -1,6 +1,5 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error, Read};
-use std::thread::current;
 
 fn read_lines<R: Read>(io: R) -> Result<Vec<String>, Error> {
     BufReader::new(io).lines().collect()
@@ -48,7 +47,7 @@ impl World {
         &self.source[x + point.y * self.width]
     }
 
-    fn count_trees_with_slope(&self, slope: &Slope) -> usize {
+    fn count_trees_with(&self, slope: &Slope) -> usize {
         let mut tree_count = 0;
         let mut current_point = Point::start();
 
@@ -93,6 +92,21 @@ fn main() {
     let lines = read_lines(file).expect("Incorrect input");
     let world = World::from_lines(&lines);
 
-    let slope = Slope { x: 3, y: 1 };
-    println!("{:#?}", world.count_trees_with_slope(&slope));
+    // Part 1
+    let answer1 = world.count_trees_with(&Slope { x: 3, y: 1 });
+    println!("{:#?}", answer1);
+
+    // Part 2
+    let slopes = [
+        Slope {x: 1, y: 1},
+        Slope {x: 3, y: 1},
+        Slope {x: 5, y: 1},
+        Slope {x: 7, y: 1},
+        Slope {x: 1, y: 2},
+    ];
+
+    let answer2 = slopes.iter()
+        .map(|slope| world.count_trees_with(&slope))
+        .product::<usize>();
+    println!("{:#?}", answer2);
 }
