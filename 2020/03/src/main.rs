@@ -4,12 +4,6 @@ use std::io::{BufRead, BufReader, Error, Read};
 fn read_lines<R: Read>(io: R) -> Result<Vec<String>, Error> {
     BufReader::new(io).lines().collect()
 }
-#[derive(Debug)]
-struct World {
-    width: usize,
-    height: usize,
-    source: Vec<Square>,
-}
 
 #[derive(Debug)]
 struct Point {
@@ -39,6 +33,13 @@ type Slope = Point;
 enum Square {
     Open,
     Tree,
+}
+
+#[derive(Debug)]
+struct World {
+    width: usize,
+    height: usize,
+    source: Vec<Square>,
 }
 
 impl World {
