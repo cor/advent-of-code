@@ -1,9 +1,9 @@
+extern crate regex;
+use regex::Regex;
 use std::fs::File;
 use std::str::FromStr;
 use std::io::Read;
 
-extern crate regex;
-use regex::Regex;
 
 
 fn load_file(path: &str) -> String {
@@ -33,11 +33,48 @@ impl Field {
             Self::BirthYear(n) => (1920..2003).contains(n),
             Self::IssueYear(n) => (2010..2021).contains(n),
             Self::ExpirationYear(n) => (2020..2031).contains(n),
-            Self::Height(h) => validate_height(h),
-            Self::HairColor(c) => validate_color(c),
-            Self::EyeColor(c) => ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&c.as_str()),
-            Self::PassportID(p) => validate_passport_id(p),
-            Self::CountryID(s) => true,
+            Self::HairColor(s) => {
+                let input_re: Regex = Regex::new(r#"#([a-f0-9]{6})"#).unwrap();
+                input_re.captures_iter(s).count() > 0
+            },
+            Self::EyeColor(c) => {
+                ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&c.as_str())
+            },
+            Self::PassportID(s) => {
+                let input_re: Regex = Regex::new(r#"^(\d{9})$"#).unwrap();
+                input_re.captures_iter(s).count() > 0
+            },
+            Self::CountryID(_) => true,
+            Self::Height(s) => {
+                let input_re: Regex = Regex::new(
+                    r#"(?x)
+                           (\d+)(cm) |
+                           (\d+)(in)
+                           "#).unwrap();
+
+                let captures = input_re.captures(s).map(|captures| {
+                    captures
+                        .iter() // All the captured groups
+                        .skip(1) // Skipping the complete match
+                        .flat_map(|c| c) // Ignoring all empty optional matches
+                        .map(|c| c.as_str()) // Grab the original strings
+                        .collect::<Vec<_>>() // Create a vector
+                });
+
+
+                // Match against the captured values as a slice
+                match captures.as_ref().map(|c| c.as_slice()) {
+                    Some([n, "cm"]) => {
+                        let h = n.parse::<u64>().unwrap();
+                        (150..195).contains(&h)
+                    },
+                    Some([n, "in"]) => {
+                        let h = n.parse::<u64>().unwrap();
+                        (59..77).contains(&h)
+                    },
+                    _ => false,
+                }
+            },
         }
     }
 }
@@ -96,52 +133,6 @@ impl FromStr for Passport {
 
         Ok(Passport(fields))
     }
-}
-
-fn validate_height(input: &str) -> bool {
-    let input_re: Regex = Regex::new(
-        r#"(?x)
-            (\d+)(cm) |
-            (\d+)(in)
-            "#
-    ).unwrap();
-
-    let captures = input_re.captures(input).map(|captures| {
-        captures
-            .iter() // All the captured groups
-            .skip(1) // Skipping the complete match
-            .flat_map(|c| c) // Ignoring all empty optional matches
-            .map(|c| c.as_str()) // Grab the original strings
-            .collect::<Vec<_>>() // Create a vector
-    });
-
-
-    // Match against the captured values as a slice
-    match captures.as_ref().map(|c| c.as_slice()) {
-        Some([n, "cm"]) => {
-            let h = n.parse::<u64>().unwrap();
-            (150..195).contains(&h)
-        },
-        Some([n, "in"]) => {
-            let h = n.parse::<u64>().unwrap();
-            (59..77).contains(&h)
-        },
-        _ => { println!("Invalid height"); false },
-    }
-}
-
-fn validate_color(s: &str) -> bool {
-    println!("{}", s);
-    let input_re: Regex = Regex::new(r#"#([a-f0-9]{6})"#).unwrap();
-
-
-    input_re.captures(s).iter().count() > 0
-}
-
-fn validate_passport_id(s: &str) -> bool {
-    let input_re: Regex = Regex::new(r#"^(\d{9})$"#).unwrap();
-
-    input_re.captures(s).iter().count() > 0
 }
 
 
