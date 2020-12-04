@@ -4,8 +4,6 @@ use std::fs::File;
 use std::str::FromStr;
 use std::io::Read;
 
-
-
 fn load_file(path: &str) -> String {
     let mut input = String::new();
     let mut f = File::open(path).expect("Unable to open file");
@@ -136,28 +134,53 @@ impl FromStr for Passport {
 }
 
 
+#[derive(Debug)]
+struct Passports(Vec<Passport>);
+
+impl Passports {
+    fn valid_count_1(&self) -> usize {
+        self.0.iter()
+            .filter(|p| Passport::is_valid(p))
+            .count()
+    }
+
+    fn valid_count_2(&self) -> usize {
+        self.0.iter()
+            .filter(|p| Passport::is_valid_2(p))
+            .count()
+    }
+}
+
+impl FromStr for Passports {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let res = s
+            .lines()
+            .fold(Vec::from([String::new()]), |mut acc: Vec<String>, l: &str| {
+                match l {
+                    "" => acc.push(String::new()), // Start a new Passport string for each newline
+                    _ => acc.last_mut()
+                        .unwrap()
+                        .push_str(format!(" {}", l).as_str()), // Add fields to last passport
+                }
+                acc
+            })
+            .iter()
+            .map(|s| Passport::from_str(s))
+            .filter_map(Result::ok)
+            .collect();
+
+        Ok(Passports(res))
+    }
+}
+
+
 fn main() {
     let input = load_file("./input/1.txt");
 
-    let passports : Vec<Passport> = input
-        .lines()
-        .fold(Vec::from([String::new()]), |mut acc: Vec<String>, l: &str| {
-            match l {
-                "" => acc.push(String::new()), // Start a new Passport string for each newline
-                _ => acc.last_mut()
-                    .unwrap()
-                    .push_str(format!(" {}", l).as_str()), // Add fields to last passport
-            }
-            acc
-        })
-        .iter()
-        .map(|s| Passport::from_str(s))
-        .filter_map(Result::ok)
-        .collect();
+    let passports = Passports::from_str(&input).expect("Couldn't parse passports");
 
-    let valid_count = passports.iter()
-        .filter(|p| Passport::is_valid_2(p))
-        .count();
-
-    println!("{}", valid_count);
+    println!("{}", passports.valid_count_1());
+    println!("{}", passports.valid_count_2());
 }
