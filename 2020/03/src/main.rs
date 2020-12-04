@@ -1,5 +1,6 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error, Read};
+use std::ops::Index;
 
 fn read_lines<R: Read>(io: R) -> Result<Vec<String>, Error> {
     BufReader::new(io).lines().collect()
@@ -12,12 +13,7 @@ struct Point {
 }
 
 impl Point {
-    fn start() -> Point {
-        Point {
-            x: 0,
-            y: 0,
-        }
-    }
+    const START: Point = Point { x: 0, y: 0 };
 
     fn add_slope(&self, slope: &Slope) -> Point {
         Point {
@@ -43,17 +39,12 @@ struct World {
 }
 
 impl World {
-    fn square_at(&self, point: &Point) -> &Square {
-        let x = point.x % self.width; // repeat to the right
-        &self.source[x + point.y * self.width]
-    }
-
     fn count_trees_with(&self, slope: &Slope) -> usize {
         let mut tree_count = 0;
-        let mut current_point = Point::start();
+        let mut current_point = Point::START;
 
-        while current_point.y < self.height{
-            tree_count += match self.square_at(&current_point) {
+        while current_point.y < self.height {
+            tree_count += match self[&current_point] {
                 Square::Open => 0,
                 Square::Tree => 1,
             };
@@ -73,7 +64,7 @@ impl World {
                 let square = match square {
                     '.' => Square::Open,
                     '#' => Square::Tree,
-                    _    => panic!("Invalid character in input"),
+                    _ => panic!("Invalid character in input"),
                 };
                 source.push(square);
             }
@@ -87,6 +78,13 @@ impl World {
     }
 }
 
+impl Index<&Point> for World {
+    type Output = Square;
+
+    fn index(&self, index: &Point) -> &Self::Output {
+        &self.source[index.x % self.width + index.y * self.width]
+    }
+}
 
 fn main() {
     let file = File::open("./input/1.txt").expect("Failed to open file");
@@ -99,14 +97,15 @@ fn main() {
 
     // Part 2
     let slopes = [
-        Slope {x: 1, y: 1},
-        Slope {x: 3, y: 1},
-        Slope {x: 5, y: 1},
-        Slope {x: 7, y: 1},
-        Slope {x: 1, y: 2},
+        Slope { x: 1, y: 1 },
+        Slope { x: 3, y: 1 },
+        Slope { x: 5, y: 1 },
+        Slope { x: 7, y: 1 },
+        Slope { x: 1, y: 2 },
     ];
 
-    let answer2 = slopes.iter()
+    let answer2 = slopes
+        .iter()
         .map(|slope| world.count_trees_with(&slope))
         .product::<usize>();
     println!("{:#?}", answer2);
