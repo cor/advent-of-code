@@ -2,6 +2,7 @@ use std::fs::File;
 use std::io::{Read};
 use std::ops::{AddAssign, Index};
 use std::str::FromStr;
+use std::convert::TryFrom;
 
 fn load_file(path: &str) -> String {
     let mut input = String::new();
@@ -35,6 +36,18 @@ impl AddAssign<&Slope> for Point {
 enum Square {
     Open,
     Tree,
+}
+
+impl TryFrom<char> for Square {
+    type Error = String;
+
+    fn try_from(c: char) -> Result<Self, Self::Error> {
+        match c {
+            '#' => Ok(Self::Tree),
+            '.' => Ok(Self::Open),
+            _ => Err(format!("Can't parse Square from `{}`", c)),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -72,18 +85,13 @@ impl FromStr for World {
         let lines: Vec<&str> = s.lines().collect();
         let width = lines[0].len();
         let height = lines.len();
-        let mut source = Vec::with_capacity(width * height);
 
-        for line in lines {
-            for square in line.chars() {
-                let square = match square {
-                    '.' => Square::Open,
-                    '#' => Square::Tree,
-                    _ => panic!("Invalid character in input"),
-                };
-                source.push(square);
-            }
-        }
+        let source = lines
+            .into_iter()
+            .flat_map(str::chars)
+            .map(Square::try_from)
+            .filter_map(Result::ok)
+            .collect();
 
         Ok(World {
             width,
