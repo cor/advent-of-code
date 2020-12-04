@@ -35,9 +35,10 @@ impl Field {
             Self::ExpirationYear(n) => (2020..2031).contains(n),
             Self::Height(h) => validate_height(h),
             Self::HairColor(c) => validate_color(c),
-            Self::EyeColor(c) => ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&c.as_str()),
-            Self::PassportID(p) => validate_passport(p),
-            Self::CountryID(s) => true,
+            _ => true,
+            // Self::EyeColor(c) => ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&c.as_str()),
+            // Self::PassportID(p) => validate_passport_id(p),
+            // Self::CountryID(s) => true,
         }
     }
 }
@@ -75,6 +76,10 @@ impl Passport {
 
         all_8 || without_country
     }
+
+    fn is_valid_2 (&self) -> bool {
+        self.is_valid() && self.0.iter().all(|f| f.is_valid())
+    }
 }
 
 impl FromStr for Passport {
@@ -111,43 +116,63 @@ fn validate_height(input: &str) -> bool {
             .collect::<Vec<_>>() // Create a vector
     });
 
+
     // Match against the captured values as a slice
     match captures.as_ref().map(|c| c.as_slice()) {
-        Some([n, "in"]) => { println!("{} in", n); true },
-        Some([n, "cm"]) => { println!("{} cm", n); true },
+        Some([n, "cm"]) => {
+            let h = n.parse::<u64>().unwrap();
+            (150..195).contains(&h)
+        },
+        Some([n, "in"]) => {
+            let h = n.parse::<u64>().unwrap();
+            (59..77).contains(&h)
+        },
         _ => { println!("Invalid height"); false },
     }
 }
 
+fn validate_color(s: &str) -> bool {
+    let input_re: Regex = Regex::new(r#"/#([a-f]|[A-F]|[0-9]){3}(([a-f]|[A-F]|[0-9]){3})?\b/"#).unwrap();
+
+    input_re.captures(s).iter().count() > 0
+}
+
+fn validate_passport_id(s: &str) -> bool {
+    let input_re: Regex = Regex::new(r#"^(\d{9})$"#).unwrap();
+
+    input_re.captures(s).iter().count() > 0
+}
 
 
 fn main() {
     let input = load_file("./input/1.txt");
-    //
-    // let passports : Vec<Passport> = input
-    //     .lines()
-    //     .fold(Vec::from([String::new()]), |mut acc: Vec<String>, l: &str| {
-    //         match l {
-    //             "" => acc.push(String::new()), // Start a new Passport string for each newline
-    //             _ => acc.last_mut()
-    // //                 .unwrap()
-    // //                 .push_str(format!(" {}", l).as_str()), // Add fields to last passport
-    // //         }
-    // //         acc
-    // //     })
-    // //     .iter()
-    // //     .map(|s| Passport::from_str(s))
-    // //     .filter_map(Result::ok)
-    // //     .collect();
-    // //
-    // // let valid_count = passports.iter()
-    // //     .filter(|p| Passport::is_valid(p))
-    // //     .count();
-    //
+
+    let passports : Vec<Passport> = input
+        .lines()
+        .fold(Vec::from([String::new()]), |mut acc: Vec<String>, l: &str| {
+            match l {
+                "" => acc.push(String::new()), // Start a new Passport string for each newline
+                _ => acc.last_mut()
+                    .unwrap()
+                    .push_str(format!(" {}", l).as_str()), // Add fields to last passport
+            }
+            acc
+        })
+        .iter()
+        .map(|s| Passport::from_str(s))
+        .filter_map(Result::ok)
+        .collect();
+
+    let valid_count = passports.iter()
+        .filter(|p| Passport::is_valid_2(p))
+        .count();
+
     // println!("{:#?}", &passports);
-    // println!("{}", valid_count);
+    println!("{}", valid_count);
 
-    let input = "60in";
-
-    validate_height("190cma");
+    // let input = "60in";
+    //
+    // validate_height("190cma");
+    //
+    // println!("{}", validate_passport_id("123456789"));
 }
