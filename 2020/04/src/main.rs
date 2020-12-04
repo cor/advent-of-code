@@ -1,10 +1,15 @@
 use std::fs::File;
 use std::str::FromStr;
-use std::string::ParseError;
 use std::io::Read;
 
+fn load_file(path: &str) -> String {
+    let mut input = String::new();
+    let mut f = File::open(path).expect("Unable to open file");
+    f.read_to_string(&mut input).expect("Unable to read string");
 
-type Passport = Vec<Field>;
+    input
+}
+
 
 #[derive(Debug)]
 enum Field {
@@ -40,19 +45,30 @@ impl FromStr for Field {
     }
 }
 
+#[derive(Debug)]
+struct Passport(Vec<Field>);
 
-fn load_file(path: &str) -> String {
-    let mut input = String::new();
-    let mut f = File::open(path).expect("Unable to open file");
-    f.read_to_string(&mut input).expect("Unable to read string");
+impl FromStr for Passport {
+    type Err = String;
 
-    input
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let fields = s.split(" ")
+            .collect::<Vec<&str>>()
+            .iter()
+            .map(|f| Field::from_str(f))
+            .filter_map(Result::ok)
+            .collect();
+
+        Ok(Passport(fields))
+    }
 }
+
+
 
 fn main() {
     let input = load_file("./input/1.txt");
 
-    let field = Field::from_str("hcl:#ae17e1");
+    let passport = Passport::from_str("iyr:2013 ecl:amb cid:350 eyr:2023 pid:028048884 hcl:#cfa07d byr:1929");
 
-    println!("{:?}", field);
+    println!("{:?}", passport);
 }
