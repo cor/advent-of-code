@@ -28,9 +28,9 @@ enum Field {
 impl Field {
     fn is_valid(&self) -> bool {
         match self {
-            Self::BirthYear(n) => (1920..2003).contains(n),
-            Self::IssueYear(n) => (2010..2021).contains(n),
-            Self::ExpirationYear(n) => (2020..2031).contains(n),
+            Self::BirthYear(n) => (1920..=2002).contains(n),
+            Self::IssueYear(n) => (2010..=2020).contains(n),
+            Self::ExpirationYear(n) => (2020..=2030).contains(n),
             Self::HairColor(s) => {
                 let input_re: Regex = Regex::new(r#"#([a-f0-9]{6})"#).unwrap();
                 input_re.captures_iter(s).count() > 0
@@ -64,11 +64,11 @@ impl Field {
                 match captures.as_ref().map(|c| c.as_slice()) {
                     Some([n, "cm"]) => {
                         let h = n.parse::<u64>().unwrap();
-                        (150..195).contains(&h)
+                        (150..=194).contains(&h)
                     },
                     Some([n, "in"]) => {
                         let h = n.parse::<u64>().unwrap();
-                        (59..77).contains(&h)
+                        (59..=76).contains(&h)
                     },
                     _ => false,
                 }
