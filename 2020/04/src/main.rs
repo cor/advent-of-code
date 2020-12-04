@@ -2,6 +2,10 @@ use std::fs::File;
 use std::str::FromStr;
 use std::io::Read;
 
+extern crate regex;
+use regex::Regex;
+
+
 fn load_file(path: &str) -> String {
     let mut input = String::new();
     let mut f = File::open(path).expect("Unable to open file");
@@ -21,6 +25,21 @@ enum Field {
     EyeColor(String),
     PassportID(String),
     CountryID(u32),
+}
+
+impl Field {
+    fn is_valid(&self) -> bool {
+        match self {
+            Self::BirthYear(n) => (1920..2003).contains(n),
+            Self::IssueYear(n) => (2010..2021).contains(n),
+            Self::ExpirationYear(n) => (2020..2031).contains(n),
+            Self::Height(h) => validate_height(h),
+            Self::HairColor(c) => validate_color(c),
+            Self::EyeColor(c) => ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&c.as_str()),
+            Self::PassportID(p) => validate_passport(p),
+            Self::CountryID(s) => true,
+        }
+    }
 }
 
 impl FromStr for Field {
@@ -75,31 +94,60 @@ impl FromStr for Passport {
     }
 }
 
+fn validate_height(input: &str) -> bool {
+    let input_re: Regex = Regex::new(
+        r#"(?x)
+            (\d+)(cm) |
+            (\d+)(in)
+            "#
+    ).unwrap();
+
+    let captures = input_re.captures(input).map(|captures| {
+        captures
+            .iter() // All the captured groups
+            .skip(1) // Skipping the complete match
+            .flat_map(|c| c) // Ignoring all empty optional matches
+            .map(|c| c.as_str()) // Grab the original strings
+            .collect::<Vec<_>>() // Create a vector
+    });
+
+    // Match against the captured values as a slice
+    match captures.as_ref().map(|c| c.as_slice()) {
+        Some([n, "in"]) => { println!("{} in", n); true },
+        Some([n, "cm"]) => { println!("{} cm", n); true },
+        _ => { println!("Invalid height"); false },
+    }
+}
+
 
 
 fn main() {
     let input = load_file("./input/1.txt");
+    //
+    // let passports : Vec<Passport> = input
+    //     .lines()
+    //     .fold(Vec::from([String::new()]), |mut acc: Vec<String>, l: &str| {
+    //         match l {
+    //             "" => acc.push(String::new()), // Start a new Passport string for each newline
+    //             _ => acc.last_mut()
+    // //                 .unwrap()
+    // //                 .push_str(format!(" {}", l).as_str()), // Add fields to last passport
+    // //         }
+    // //         acc
+    // //     })
+    // //     .iter()
+    // //     .map(|s| Passport::from_str(s))
+    // //     .filter_map(Result::ok)
+    // //     .collect();
+    // //
+    // // let valid_count = passports.iter()
+    // //     .filter(|p| Passport::is_valid(p))
+    // //     .count();
+    //
+    // println!("{:#?}", &passports);
+    // println!("{}", valid_count);
 
-    let passports : Vec<Passport> = input
-        .lines()
-        .fold(Vec::from([String::new()]), |mut acc: Vec<String>, l: &str| {
-            match l {
-                "" => acc.push(String::new()), // Start a new Passport string for each newline
-                _ => acc.last_mut()
-                    .unwrap()
-                    .push_str(format!(" {}", l).as_str()), // Add fields to last passport
-            }
-            acc
-        })
-        .iter()
-        .map(|s| Passport::from_str(s))
-        .filter_map(Result::ok)
-        .collect();
+    let input = "60in";
 
-    let valid_count = passports.iter()
-        .filter(|p| Passport::is_valid(p))
-        .count();
-
-    println!("{:#?}", &passports);
-    println!("{}", valid_count);
+    validate_height("190cma");
 }
