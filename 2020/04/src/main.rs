@@ -19,7 +19,7 @@ enum Field {
     Height(String),
     HairColor(String),
     EyeColor(String),
-    PassportID(u32),
+    PassportID(String),
     CountryID(u32),
 }
 
@@ -38,7 +38,7 @@ impl FromStr for Field {
             "hgt" => Ok(Self::Height(String::from(value))),
             "hcl" => Ok(Self::HairColor(String::from(value))),
             "ecl" => Ok(Self::EyeColor(String::from(value))),
-            "pid" => Ok(Self::PassportID(value.parse::<u32>().unwrap())),
+            "pid" => Ok(Self::PassportID(String::from(value))),
             "cid" => Ok(Self::CountryID(value.parse::<u32>().unwrap())),
             _ => Err(String::from("Invalid Field key")),
         }
@@ -52,7 +52,9 @@ impl FromStr for Passport {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let fields = s.split(" ")
+        let fields = s
+            .trim()
+            .split(" ")
             .collect::<Vec<&str>>()
             .iter()
             .map(|f| Field::from_str(f))
@@ -68,7 +70,20 @@ impl FromStr for Passport {
 fn main() {
     let input = load_file("./input/1.txt");
 
-    let passport = Passport::from_str("iyr:2013 ecl:amb cid:350 eyr:2023 pid:028048884 hcl:#cfa07d byr:1929");
+    let passports : Vec<Passport> = input
+        .lines()
+        .fold(Vec::from([String::new()]), |mut acc: Vec<String>, l: &str| {
+            match l {
+                "" => acc.push(String::new()),
+                _ => acc.last_mut().unwrap().push_str(format!(" {}", l).as_str()),
+            }
+            acc
+        })
+        .iter()
+        .map(|s| Passport::from_str(s))
+        .filter_map(Result::ok)
+        .collect();
 
-    println!("{:?}", passport);
+
+    println!("{:#?}", &passports);
 }
