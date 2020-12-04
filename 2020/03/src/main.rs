@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader, Error, Read};
-use std::ops::Index;
+use std::ops::{AddAssign, Index};
 
 fn read_lines<R: Read>(io: R) -> Result<Vec<String>, Error> {
     BufReader::new(io).lines().collect()
@@ -11,19 +11,20 @@ struct Point {
     x: usize,
     y: usize,
 }
+type Slope = Point;
 
 impl Point {
     const START: Point = Point { x: 0, y: 0 };
-
-    fn add_slope(&self, slope: &Slope) -> Point {
-        Point {
-            x: self.x + slope.x,
-            y: self.y + slope.y,
-        }
-    }
 }
 
-type Slope = Point;
+impl AddAssign<&Slope> for Point {
+    fn add_assign(&mut self, slope: &Slope) {
+        *self = Point {
+            x: self.x + slope.x,
+            y: self.y + slope.y,
+        };
+    }
+}
 
 #[derive(Debug)]
 enum Square {
@@ -40,18 +41,22 @@ struct World {
 
 impl World {
     fn count_trees_with(&self, slope: &Slope) -> usize {
-        let mut tree_count = 0;
         let mut current_point = Point::START;
+        let mut tree_count = 0;
 
-        while current_point.y < self.height {
+        while self.point_in_bounds(&current_point) {
             tree_count += match self[&current_point] {
                 Square::Open => 0,
                 Square::Tree => 1,
             };
-            current_point = current_point.add_slope(slope);
+            current_point += slope;
         }
 
         tree_count
+    }
+
+    fn point_in_bounds(&self, point: &Point) -> bool {
+        point.y < self.height
     }
 
     fn from_lines(lines: &Vec<String>) -> World {
