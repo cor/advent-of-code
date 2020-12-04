@@ -112,7 +112,7 @@ impl Passport {
     }
 
     fn is_valid_2 (&self) -> bool {
-        self.is_valid() && self.0.iter().all(|f| f.is_valid())
+        self.is_valid() && self.0.iter().all(Field::is_valid)
     }
 }
 
