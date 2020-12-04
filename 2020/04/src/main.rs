@@ -11,7 +11,7 @@ fn load_file(path: &str) -> String {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Field {
     BirthYear(u32),
     IssueYear(u32),
@@ -48,6 +48,16 @@ impl FromStr for Field {
 #[derive(Debug)]
 struct Passport(Vec<Field>);
 
+impl Passport {
+    fn is_valid (&self) -> bool {
+        let all_8 = self.0.len() == 8;
+        let without_country = self.0.len() == 7 &&
+            !self.0.iter().any(|f| matches!(f, Field::CountryID(_)));
+
+        all_8 || without_country
+    }
+}
+
 impl FromStr for Passport {
     type Err = String;
 
@@ -74,8 +84,10 @@ fn main() {
         .lines()
         .fold(Vec::from([String::new()]), |mut acc: Vec<String>, l: &str| {
             match l {
-                "" => acc.push(String::new()),
-                _ => acc.last_mut().unwrap().push_str(format!(" {}", l).as_str()),
+                "" => acc.push(String::new()), // Start a new Passport string for each newline
+                _ => acc.last_mut()
+                    .unwrap()
+                    .push_str(format!(" {}", l).as_str()), // Add fields to last passport
             }
             acc
         })
@@ -84,6 +96,10 @@ fn main() {
         .filter_map(Result::ok)
         .collect();
 
+    let valid_count = passports.iter()
+        .filter(|p| Passport::is_valid(p))
+        .count();
 
     println!("{:#?}", &passports);
+    println!("{}", valid_count);
 }
