@@ -35,10 +35,9 @@ impl Field {
             Self::ExpirationYear(n) => (2020..2031).contains(n),
             Self::Height(h) => validate_height(h),
             Self::HairColor(c) => validate_color(c),
-            _ => true,
-            // Self::EyeColor(c) => ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&c.as_str()),
-            // Self::PassportID(p) => validate_passport_id(p),
-            // Self::CountryID(s) => true,
+            Self::EyeColor(c) => ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&c.as_str()),
+            Self::PassportID(p) => validate_passport_id(p),
+            Self::CountryID(s) => true,
         }
     }
 }
@@ -132,7 +131,9 @@ fn validate_height(input: &str) -> bool {
 }
 
 fn validate_color(s: &str) -> bool {
-    let input_re: Regex = Regex::new(r#"/#([a-f]|[A-F]|[0-9]){3}(([a-f]|[A-F]|[0-9]){3})?\b/"#).unwrap();
+    println!("{}", s);
+    let input_re: Regex = Regex::new(r#"#([a-f0-9]{6})"#).unwrap();
+
 
     input_re.captures(s).iter().count() > 0
 }
@@ -167,12 +168,5 @@ fn main() {
         .filter(|p| Passport::is_valid_2(p))
         .count();
 
-    // println!("{:#?}", &passports);
     println!("{}", valid_count);
-
-    // let input = "60in";
-    //
-    // validate_height("190cma");
-    //
-    // println!("{}", validate_passport_id("123456789"));
 }
