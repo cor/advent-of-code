@@ -14,10 +14,31 @@ impl Seat {
     }
 }
 
+// both bounds are inclusive.
+#[derive(Debug)]
+struct Range {
+    lower: usize,
+    upper: usize,
+}
+
+impl Range {
+    fn take_lower_half(&mut self) {
+        let half = (self.upper - self.lower) / 2;
+        self.upper = self.lower + half;
+    }
+
+    fn take_upper_half(&mut self) {
+        let half = (self.upper - self.lower) / 2;
+        self.lower = self.lower + half + 1;
+    }
+}
+
 impl FromStr for Seat {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut range = Range { lower: 0, upper: 127};
+
         Ok(Seat { row: 4, column: 4 }) // TODO: Calculate based on s
     }
 }
@@ -44,6 +65,17 @@ fn main() {
         row: 70,
         column: 7,
     };
+
+    let mut a_range = Range {
+        lower: 0,
+        upper: 63,
+    };
+
+    println!("Before lower: {:?}", a_range);
+
+    a_range.take_upper_half();
+
+    println!("After lower: {:?}", a_range);
 
     println!("{:?}", a_seat);
     println!("{:?}", seats);
