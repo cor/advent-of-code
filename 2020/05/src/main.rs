@@ -75,27 +75,30 @@ fn load_file(path: &str) -> String {
 fn main() {
     let input = load_file("./input/1.txt");
 
+    // Get Seats from input
     let seats: Vec<Seat> = input
         .lines()
         .map(|s| Seat::from_str(s))
         .filter_map(Result::ok)
         .collect();
 
+    // Map to IDs
     let mut seat_ids: Vec<usize> = seats
         .iter()
         .map(|s| s.id())
         .collect();
-
     seat_ids.sort();
 
-    println!("{:?}", seat_ids);
-
+    // Answer 1
     let answer_1 = seat_ids.iter().max();
-    println!("{:?}", answer_1);
+    if let Some(ans) = answer_1 {
+        println!("{:?}", ans);
+    }
 
-    for (i, id) in seat_ids.iter().enumerate() {
-        if i < (seat_ids.len() - 2) && seat_ids[i+1] == id + 2 {
-            println!("{:?}", id + 1);
+    // Answer 2
+    for i in 0..(seat_ids.len() - 2) {
+        if seat_ids[i+1] == seat_ids[i] + 2 {
+            println!("{:?}", seat_ids[i] + 1);
         }
     }
 
