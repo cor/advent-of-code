@@ -81,11 +81,22 @@ fn main() {
         .filter_map(Result::ok)
         .collect();
 
-
-    let answer_1 = seats
+    let mut seat_ids: Vec<usize> = seats
         .iter()
         .map(|s| s.id())
-        .max();
+        .collect();
 
+    seat_ids.sort();
+
+    println!("{:?}", seat_ids);
+
+    let answer_1 = seat_ids.iter().max();
     println!("{:?}", answer_1);
+
+    for (i, id) in seat_ids.iter().enumerate() {
+        if i < (seat_ids.len() - 2) && seat_ids[i+1] == id + 2 {
+            println!("{:?}", id + 1);
+        }
+    }
+
 }
