@@ -44,34 +44,16 @@ impl Field {
             },
             Self::CountryID(_) => true,
             Self::Height(s) => {
-                let input_re: Regex = Regex::new(
-                    r#"(?x)
-                           (\d+)(cm) |
-                           (\d+)(in)
-                           "#).unwrap();
+                let num = (&s[..(s.len()-2)]).parse::<u64>();
 
-                let captures = input_re.captures(s).map(|captures| {
-                    captures
-                        .iter() // All the captured groups
-                        .skip(1) // Skipping the complete match
-                        .flat_map(|c| c) // Ignoring all empty optional matches
-                        .map(|c| c.as_str()) // Grab the original strings
-                        .collect::<Vec<_>>() // Create a vector
-                });
-
-
-                // Match against the captured values as a slice
-                match captures.as_ref().map(|c| c.as_slice()) {
-                    Some([n, "cm"]) => {
-                        let h = n.parse::<u64>().unwrap();
-                        (150..=194).contains(&h)
-                    },
-                    Some([n, "in"]) => {
-                        let h = n.parse::<u64>().unwrap();
-                        (59..=76).contains(&h)
-                    },
-                    _ => false,
+                if let Ok(h) = num {
+                    if s.ends_with("cm") {
+                        return (150..=194).contains(&h)
+                    } else if s.ends_with("in") {
+                        return (59..=76).contains(&h)
+                    }
                 }
+                false
             },
         }
     }
