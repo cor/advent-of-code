@@ -138,18 +138,10 @@ impl FromStr for Passports {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let res = s
-            .lines()
-            .fold(Vec::from([String::new()]), |mut acc: Vec<String>, l: &str| {
-                match l {
-                    "" => acc.push(String::new()), // Start a new Passport string for each newline
-                    _ => acc.last_mut()
-                        .unwrap()
-                        .push_str(format!(" {}", l).as_str()), // Add fields to last passport
-                }
-                acc
-            })
-            .iter()
-            .map(|s| Passport::from_str(s))
+            .trim()
+            .split("\n\n")
+            .map(|x| x.to_string().replace("\n", " "))
+            .map(|s| Passport::from_str(s.as_str()))
             .filter_map(Result::ok)
             .collect();
 
