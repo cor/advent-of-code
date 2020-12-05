@@ -1,8 +1,8 @@
 extern crate regex;
 use regex::Regex;
 use std::fs::File;
-use std::str::FromStr;
 use std::io::Read;
+use std::str::FromStr;
 
 fn load_file(path: &str) -> String {
     let mut input = String::new();
@@ -11,7 +11,6 @@ fn load_file(path: &str) -> String {
 
     input
 }
-
 
 #[derive(Debug, PartialEq)]
 enum Field {
@@ -34,27 +33,27 @@ impl Field {
             Self::HairColor(s) => {
                 let input_re: Regex = Regex::new(r#"#([a-f0-9]{6})"#).unwrap();
                 input_re.captures_iter(s).count() > 0
-            },
+            }
             Self::EyeColor(c) => {
                 ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].contains(&c.as_str())
-            },
+            }
             Self::PassportID(s) => {
                 let input_re: Regex = Regex::new(r#"^(\d{9})$"#).unwrap();
                 input_re.captures_iter(s).count() > 0
-            },
+            }
             Self::CountryID(_) => true,
             Self::Height(s) => {
-                let num = (&s[..(s.len()-2)]).parse::<u64>();
+                let num = (&s[..(s.len() - 2)]).parse::<u64>();
 
                 if let Ok(h) = num {
                     if s.ends_with("cm") {
-                        return (150..=194).contains(&h)
+                        return (150..=194).contains(&h);
                     } else if s.ends_with("in") {
-                        return (59..=76).contains(&h)
+                        return (59..=76).contains(&h);
                     }
                 }
                 false
-            },
+            }
         }
     }
 }
@@ -85,15 +84,12 @@ impl FromStr for Field {
 struct Passport(Vec<Field>);
 
 impl Passport {
-    fn is_valid (&self) -> bool {
-        let all_8 = self.0.len() == 8;
-        let without_country = self.0.len() == 7 &&
-            !self.0.iter().any(|f| matches!(f, Field::CountryID(_)));
-
-        all_8 || without_country
+    fn is_valid(&self) -> bool {
+        let no_country_id = !self.0.iter().any(|f| matches!(f, Field::CountryID(_)));
+        self.0.len() == 8 || (self.0.len() == 7 && no_country_id)
     }
 
-    fn is_valid_2 (&self) -> bool {
+    fn is_valid_2(&self) -> bool {
         self.is_valid() && self.0.iter().all(Field::is_valid)
     }
 }
@@ -115,21 +111,16 @@ impl FromStr for Passport {
     }
 }
 
-
 #[derive(Debug)]
 struct Passports(Vec<Passport>);
 
 impl Passports {
     fn valid_count_1(&self) -> usize {
-        self.0.iter()
-            .filter(|p| Passport::is_valid(p))
-            .count()
+        self.0.iter().filter(|p| Passport::is_valid(p)).count()
     }
 
     fn valid_count_2(&self) -> usize {
-        self.0.iter()
-            .filter(|p| Passport::is_valid_2(p))
-            .count()
+        self.0.iter().filter(|p| Passport::is_valid_2(p)).count()
     }
 }
 
@@ -148,7 +139,6 @@ impl FromStr for Passports {
         Ok(Passports(res))
     }
 }
-
 
 fn main() {
     let input = load_file("./input/1.txt");
