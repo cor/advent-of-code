@@ -37,9 +37,29 @@ impl FromStr for Seat {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut range = Range { lower: 0, upper: 127};
+        // Determine Row
+        let mut row_range = Range { lower: 0, upper: 127};
+        for c in (&s[..(s.len()-3)]).chars() {
+            match c {
+                'F' => row_range.take_lower_half(),
+                'B' => row_range.take_upper_half(),
+                _   => panic!("Invalid row char in input"),
+            }
+        }
+        let row = row_range.lower;
 
-        Ok(Seat { row: 4, column: 4 }) // TODO: Calculate based on s
+        // Determine Column
+        let mut column_range = Range { lower: 0, upper: 7};
+        for c in (&s[(s.len()-3)..]).chars() {
+            match c {
+                'L' => column_range.take_lower_half(),
+                'R' => column_range.take_upper_half(),
+                _   => panic!("Invalid row char in input"),
+            }
+        }
+        let column = column_range.lower;
+
+        Ok(Seat { row, column })
     }
 }
 
@@ -61,23 +81,11 @@ fn main() {
         .filter_map(Result::ok)
         .collect();
 
-    let a_seat = Seat {
-        row: 70,
-        column: 7,
-    };
 
-    let mut a_range = Range {
-        lower: 0,
-        upper: 63,
-    };
+    let answer_1 = seats
+        .iter()
+        .map(|s| s.id())
+        .max();
 
-    println!("Before lower: {:?}", a_range);
-
-    a_range.take_upper_half();
-
-    println!("After lower: {:?}", a_range);
-
-    println!("{:?}", a_seat);
-    println!("{:?}", seats);
-    println!("{:?}", a_seat.id());
+    println!("{:?}", answer_1);
 }
