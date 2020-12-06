@@ -22,22 +22,19 @@ fn main() {
         .sum();
 
     let answer2: usize = groups
-        .map(|group| group.lines())
-        .map(|answers| {
+        .map(|group| (group.clone().lines().count(), group))
+        .map(|(answer_count, answers)| {
             let mut char_counts: HashMap<char, usize> = HashMap::new();
-
-            answers.clone().for_each(|s| s.chars().for_each(|c| {
+            answers.chars().for_each(|c| {
                 let count = char_counts.entry(c).or_insert(0);
                 *count += 1;
-            }));
+            });
 
-            let answer_count = answers.count();
             char_counts.values()
                 .filter(|&&count| count == answer_count)
                 .count()
         })
         .sum();
-
 
     println!("{:?}", answer1);
     println!("{:?}", answer2);
