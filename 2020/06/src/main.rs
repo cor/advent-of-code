@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 use itertools::Itertools;
+use std::collections::HashMap;
 
 
 fn load_file(path: &str) -> String {
@@ -13,12 +14,34 @@ fn load_file(path: &str) -> String {
 
 fn main() {
     let input = load_file("./input/1.txt");
+    let groups = input.split("\n\n");
 
-    let answer1: usize = input
-        .split("\n\n")
-        .map(|x| x.to_string().replace("\n", ""))
+    let answer1: usize = groups.clone()
+        .map(|s| s.to_string().replace("\n", ""))
         .map(|g| g.chars().into_iter().unique().count())
         .sum();
 
-    println!("{:?}", answer1);
+    let answer2: usize = groups
+        .map(|group| group.split("\n"))
+        .map(|answers| {
+            let mut char_counts: HashMap<char, usize> = HashMap::new();
+            let mut answer_count = 0;
+
+            for answer in answers {
+                for c in answer.chars() {
+                    let count = char_counts.entry(c).or_insert(0);
+                    *count += 1;
+                }
+                answer_count += 1;
+            }
+
+            char_counts
+                .iter()
+                .filter(|(&c, &count)| count == answer_count)
+                .count()
+        })
+        .sum();
+
+
+    println!("{:?}", answer2);
 }
