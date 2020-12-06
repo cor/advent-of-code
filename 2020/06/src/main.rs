@@ -25,10 +25,11 @@ fn main() {
         .map(|group| (group.clone().lines().count(), group))
         .map(|(answer_count, answers)| {
             let mut char_counts: HashMap<char, usize> = HashMap::new();
-            answers.chars().for_each(|c| {
+
+            for c in answers.chars() {
                 let count = char_counts.entry(c).or_insert(0);
                 *count += 1;
-            });
+            }
 
             char_counts.values()
                 .filter(|&&count| count == answer_count)
