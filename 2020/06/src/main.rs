@@ -25,7 +25,6 @@ fn main() {
         .map(|group| (group.clone().lines().count(), group))
         .map(|(answer_count, answers)| {
             let mut char_counts: HashMap<char, usize> = HashMap::new();
-
             for c in answers.chars() {
                 let count = char_counts.entry(c).or_insert(0);
                 *count += 1;
