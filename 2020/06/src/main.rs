@@ -35,13 +35,13 @@ fn main() {
                 answer_count += 1;
             }
 
-            char_counts
-                .iter()
-                .filter(|(&c, &count)| count == answer_count)
+            char_counts.values()
+                .filter(|&count| count == &answer_count)
                 .count()
         })
         .sum();
 
 
+    println!("{:?}", answer1);
     println!("{:?}", answer2);
 }
