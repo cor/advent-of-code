@@ -2,6 +2,9 @@ use aoc_2020_common::common::load_file;
 use regex::Regex;
 use std::collections::HashMap;
 
+/// We create two separate HashMaps, one called `can_be_contained_in`, and the other `contains`.
+/// `can_be_contained_in is ` 's key is a bag B its value a list of bags that may contain B.
+/// `contains`'s key is a bag B and it's value is a list of bags that B can contain.
 fn parse_input(input: &str) -> (HashMap<String, Vec<String>>, HashMap<String, Vec<(usize, String)>>) {
     let contains_re: Regex = Regex::new(r#"(\d+) (.+?) bag"#).unwrap();
     let mut can_be_contained_in: HashMap<String, Vec<String>> = HashMap::new();
