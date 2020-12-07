@@ -22,10 +22,28 @@ fn parse_input(input: &str) -> HashMap<String, Vec<String>> {
     can_be_contained_in
 }
 
+fn add_to_containers(target: &String, containers: &mut Vec<String>, can_be_contained_in: &HashMap<String, Vec<String>>) {
+    if can_be_contained_in.contains_key(target) {
+        for container in &can_be_contained_in[target] {
+            add_to_containers(container, containers, can_be_contained_in);
+            containers.push(container.clone());
+        }
+    }
+}
+
 fn main() {
-    let input = load_file("./input/example.txt");
+    let input = load_file("./input/1.txt");
+    let target = String::from("shiny gold");
 
     let can_be_contained_in = parse_input(&input);
 
-    println!("map '{:#?}'", can_be_contained_in);
+    let mut containers : Vec<String> = Vec::new();
+    add_to_containers(&target, &mut containers, &can_be_contained_in);
+
+    containers.sort_unstable();
+    containers.dedup();
+
+    let answer1 = containers.len();
+
+    println!("{}", answer1);
 }
