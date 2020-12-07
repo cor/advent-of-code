@@ -1,16 +1,8 @@
-use std::fs::File;
-use std::io::{Read};
 use std::ops::{AddAssign, Index};
 use std::str::FromStr;
 use std::convert::TryFrom;
+use aoc_2020_common::common::load_file;
 
-fn load_file(path: &str) -> String {
-    let mut input = String::new();
-    let mut f = File::open(path).expect("Unable to open file");
-    f.read_to_string(&mut input).expect("Unable to read string");
-
-    input
-}
 
 #[derive(Debug)]
 struct Point {

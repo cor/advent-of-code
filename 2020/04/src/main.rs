@@ -1,16 +1,7 @@
 extern crate regex;
 use regex::Regex;
-use std::fs::File;
-use std::io::Read;
 use std::str::FromStr;
-
-fn load_file(path: &str) -> String {
-    let mut input = String::new();
-    let mut f = File::open(path).expect("Unable to open file");
-    f.read_to_string(&mut input).expect("Unable to read string");
-
-    input
-}
+use aoc_2020_common::common::load_file;
 
 #[derive(Debug, PartialEq)]
 enum Field {

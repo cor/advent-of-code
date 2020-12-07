@@ -13,8 +13,13 @@ dependencies = [
 name = "aoc-2020-04"
 version = "0.1.0"
 dependencies = [
+ "aoc-2020-common",
  "regex",
 ]
+
+[[package]]
+name = "aoc-2020-common"
+version = "0.1.0"
 
 [[package]]
 name = "lazy_static"

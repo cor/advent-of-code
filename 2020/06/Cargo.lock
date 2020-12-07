@@ -4,8 +4,13 @@
 name = "aoc-2020-06"
 version = "0.1.0"
 dependencies = [
+ "aoc-2020-common",
  "itertools",
 ]
+
+[[package]]
+name = "aoc-2020-common"
+version = "0.1.0"
 
 [[package]]
 name = "either"
