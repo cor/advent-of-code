@@ -1,7 +1,7 @@
 use aoc_2020_common::common::load_file;
 use regex::Regex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Operation {
     NOP,
     ACC,
@@ -12,7 +12,7 @@ enum Operation {
 struct MachineState {
     accumulator: i64,
     program_counter: i64,
-    running: bool,
+    finished: bool,
 }
 
 fn parse_instructions(input: &str) -> Vec<(Operation, i64)> {
@@ -38,19 +38,15 @@ fn parse_instructions(input: &str) -> Vec<(Operation, i64)> {
         .collect()
 }
 
-fn main() {
-    let input = load_file("./input/1.txt");
-    let instructions = parse_instructions(&input);
-
-    let mut st = MachineState { accumulator: 0, program_counter: 0, running: true };
+fn run_machine_instructions(instructions: &Vec<(Operation, i64)>) -> MachineState {
+    let mut st = MachineState { accumulator: 0, program_counter: 0, finished: false };
     let mut visited_instructions: Vec<usize> = Vec::new();
 
-    while st.running {
+    while !st.finished {
         let pc = st.program_counter as usize;
 
         // Terminate before running an instruction a second time
         if visited_instructions.contains(&pc) {
-            st.running = false;
             break;
         }
 
@@ -66,8 +62,36 @@ fn main() {
 
         // Check if we're at the end of our program
         if st.program_counter >= instructions.len() as i64 {
-            st.running = false;
+            st.finished = true;
         }
     }
-    println!("{:?}", st.accumulator);
+
+    st
+}
+
+fn main() {
+    let input = load_file("./input/1.txt");
+    let instructions = parse_instructions(&input);
+
+    // Part 1 answer
+    let st = run_machine_instructions(&instructions);
+    println!("{}", st.accumulator);
+
+    // Part 2 answer: for every instruction, try to change NOP to JMP (or vice versa),
+    // After the change, check if it does finish execution (ie, it reaches the end of the file).
+    // If it does, then the answer is in our accumulator.
+    for (index, instr) in instructions.iter().enumerate() {
+        let mut modified_instructions = instructions.to_vec();
+        modified_instructions[index] = match instr {
+            (Operation::NOP, n) => (Operation::JMP, *n),
+            (Operation::JMP, n) => (Operation::NOP, *n),
+            (Operation::ACC, n) => (Operation::ACC, *n),
+        };
+
+        let st = run_machine_instructions(&modified_instructions);
+
+        if st.finished {
+            println!("{}", st.accumulator);
+        }
+    }
 }

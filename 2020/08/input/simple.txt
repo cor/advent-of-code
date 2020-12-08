@@ -1,7 +1,7 @@
 acc +1
 acc +2
 acc +3
-jmp +2
+jmp +1
 acc +4
 acc -5
 nop +99
