@@ -1,5 +1,6 @@
 use aoc_2020_common::common::load_file;
 use regex::Regex;
+use std::collections::HashSet;
 
 #[derive(Debug, Clone)]
 enum Operation {
@@ -40,7 +41,7 @@ fn parse_instructions(input: &str) -> Vec<(Operation, i64)> {
 
 fn run_machine_instructions(instructions: &Vec<(Operation, i64)>) -> MachineState {
     let mut st = MachineState { accumulator: 0, program_counter: 0, finished: false };
-    let mut visited_instructions: Vec<usize> = Vec::new();
+    let mut visited_instructions: HashSet<usize> = HashSet::new();
 
     while !st.finished {
         let pc = st.program_counter as usize;
@@ -51,7 +52,7 @@ fn run_machine_instructions(instructions: &Vec<(Operation, i64)>) -> MachineStat
         }
 
         // Mark instruction as visited
-        visited_instructions.push(pc);
+        visited_instructions.insert(pc);
 
         // Execute instruction
         match &instructions[pc] {
@@ -85,7 +86,7 @@ fn main() {
         modified_instructions[index] = match instr {
             (Operation::NOP, n) => (Operation::JMP, *n),
             (Operation::JMP, n) => (Operation::NOP, *n),
-            (Operation::ACC, n) => (Operation::ACC, *n),
+            (Operation::ACC, _) => continue,
         };
 
         let st = run_machine_instructions(&modified_instructions);
