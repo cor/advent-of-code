@@ -9,14 +9,16 @@ enum Operation {
     JMP,
 }
 
+type Instruction = (Operation, i64);
+
 #[derive(Debug)]
 struct MachineState {
     accumulator: i64,
-    program_counter: i64,
+    instruction_pointer: i64,
     finished: bool,
 }
 
-fn parse_instructions(input: &str) -> Vec<(Operation, i64)> {
+fn parse_instructions(input: &str) -> Vec<Instruction> {
     let instruction_re: Regex = Regex::new(r#"([a-z]{3}) ([+\-])(\d+)"#).unwrap();
 
     instruction_re
@@ -39,35 +41,35 @@ fn parse_instructions(input: &str) -> Vec<(Operation, i64)> {
         .collect()
 }
 
-fn run_machine_instructions(instructions: &Vec<(Operation, i64)>) -> MachineState {
-    let mut st = MachineState { accumulator: 0, program_counter: 0, finished: false };
+fn run_machine_instructions(instructions: &Vec<Instruction>) -> MachineState {
+    let mut state = MachineState { accumulator: 0, instruction_pointer: 0, finished: false };
     let mut visited_instructions: HashSet<usize> = HashSet::new();
 
-    while !st.finished {
-        let pc = st.program_counter as usize;
+    while !state.finished {
+        let ip = state.instruction_pointer as usize;
 
         // Terminate before running an instruction a second time
-        if visited_instructions.contains(&pc) {
+        if visited_instructions.contains(&ip) {
             break;
         }
 
         // Mark instruction as visited
-        visited_instructions.insert(pc);
+        visited_instructions.insert(ip);
 
         // Execute instruction
-        match &instructions[pc] {
-            (Operation::NOP, _) => st.program_counter += 1,
-            (Operation::ACC, n) => { st.accumulator += n; st.program_counter += 1 }
-            (Operation::JMP, n) => st.program_counter += n,
+        match &instructions[ip] {
+            (Operation::NOP, _) => state.instruction_pointer += 1,
+            (Operation::ACC, n) => { state.accumulator += n; state.instruction_pointer += 1 }
+            (Operation::JMP, n) => state.instruction_pointer += n,
         }
 
         // Check if we're at the end of our program
-        if st.program_counter >= instructions.len() as i64 {
-            st.finished = true;
+        if state.instruction_pointer >= instructions.len() as i64 {
+            state.finished = true;
         }
     }
 
-    st
+    state
 }
 
 fn main() {
@@ -81,9 +83,9 @@ fn main() {
     // Part 2 answer: for every instruction, try to change NOP to JMP (or vice versa),
     // After the change, check if it does finish execution (ie, it reaches the end of the file).
     // If it does, then the answer is in our accumulator.
-    for (index, instr) in instructions.iter().enumerate() {
+    for (index, instruction) in instructions.iter().enumerate() {
         let mut modified_instructions = instructions.to_vec();
-        modified_instructions[index] = match instr {
+        modified_instructions[index] = match instruction {
             (Operation::NOP, n) => (Operation::JMP, *n),
             (Operation::JMP, n) => (Operation::NOP, *n),
             (Operation::ACC, _) => continue,
