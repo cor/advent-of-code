@@ -18,13 +18,29 @@ fn main() {
         .map(|s| s.parse().unwrap())
         .collect();
 
+    // Part 1 answer
     let range_size = 25;
-    
+    let mut part_2_target: usize = 0;
     for (i, n) in numbers.iter().enumerate() {
         if i > range_size {
-            let preceeding = &numbers[(i-range_size)..i];
-            if !numbers_contain_summing_pair(&preceeding, n) {
+            let preceding = &numbers[(i-range_size)..i];
+            if !numbers_contain_summing_pair(&preceding, n) {
+                part_2_target = *n;
                 println!("{}", n);
+            }
+        }
+    }
+
+    assert_ne!(part_2_target, 0);
+
+    // Part 2 answer
+    for (i, n) in numbers.iter().enumerate() {
+        for (j, m) in numbers[i..].iter().enumerate() {
+            let range = &numbers[i..(i+j)];
+            if range.iter().sum::<usize>() == part_2_target {
+                let smallest = range.iter().min().unwrap();
+                let largest = range.iter().max().unwrap();
+                println!("smallest: {}, largest: {}, sum: {}", smallest, largest, (smallest+largest));
             }
         }
     }
