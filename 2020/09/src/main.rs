@@ -1,4 +1,5 @@
 use aoc_2020_common::common::load_file;
+use std::cmp::Ordering;
 
 fn numbers_contain_summing_pair(numbers: &[usize], target: &usize) -> bool {
     for (i, n) in numbers.iter().enumerate() {
@@ -34,14 +35,18 @@ fn main() {
     assert_ne!(part_2_target, 0);
 
     // Part 2 answer
-    for (i, n) in numbers.iter().enumerate() {
-        for (j, m) in numbers[i..].iter().enumerate() {
+    for (i, _) in numbers.iter().enumerate() {
+        for (j, _) in numbers[i..].iter().enumerate() {
             let range = &numbers[i..(i+j)];
-            if range.iter().sum::<usize>() == part_2_target {
-                let smallest = range.iter().min().unwrap();
-                let largest = range.iter().max().unwrap();
-                println!("smallest: {}, largest: {}, sum: {}", smallest, largest, (smallest+largest));
-            }
+            match range.iter().sum::<usize>().cmp(&part_2_target) {
+                Ordering::Less => (),
+                Ordering::Equal => {
+                    let smallest = range.iter().min().unwrap();
+                    let largest = range.iter().max().unwrap();
+                    println!("{} + {} = {}", smallest, largest, (smallest+largest));
+                }
+                Ordering::Greater => break,
+            };
         }
     }
 }
