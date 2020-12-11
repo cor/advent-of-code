@@ -51,10 +51,11 @@ impl Area {
         for y in 0..self.height {
             for x in 0..self.width {
                 let point = (x,y);
-                if self[point] == Field::Floor { continue }
-                a[point] = match self.adjacent_occupied_count(&point) {
-                    0 => Field::Occupied,
-                    x if x >= 4 => Field::Seat,
+                let occ_count = self.adjacent_occupied_count(&point);
+
+                a[point] = match (&self[point], occ_count) {
+                    (Field::Seat, 0) => Field::Occupied,
+                    (Field::Occupied, x) if x >= 4 => Field::Seat,
                     _ => continue,
                 }
             }
@@ -66,7 +67,7 @@ impl Area {
         let (x, y) = point;
 
 
-        *x > 0 && *x < self.width as isize && *y > 0 && *y < self.height as isize
+        *x >= 0 && *x < self.width as isize && *y >= 0 && *y < self.height as isize
     }
 
     fn adjacent_occupied_count(&self, point: &(usize, usize)) -> usize {
@@ -129,5 +130,8 @@ fn main() {
 
     let area2 = area.next();
     println!("{}", area2.to_string());
+
+    let area3 = area2.next();
+    println!("{}", area3.to_string());
 
 }
