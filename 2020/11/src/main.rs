@@ -18,7 +18,7 @@ impl Field {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 struct Area {
     width: usize,
     height: usize,
@@ -83,6 +83,12 @@ impl Area {
             .count()
     }
 
+    fn total_occupied_count(&self) -> usize {
+        self.fields
+            .iter()
+            .filter(|&f| *f == Field::Occupied)
+            .count()
+    }
 }
 
 impl Index<(usize, usize)> for Area {
@@ -124,14 +130,16 @@ impl ToString for Area {
 
 
 fn main() {
-    let input = load_file("./input/example.txt");
-    let area = Area::from(&input);
-    println!("{}", area.to_string());
+    let input = load_file("./input/1.txt");
+    let mut area = Area::from(&input);
 
-    let area2 = area.next();
-    println!("{}", area2.to_string());
+    loop {
+        let old_area = area.clone();
+        area = area.next();
+        // println!("{}", area.to_string());
 
-    let area3 = area2.next();
-    println!("{}", area3.to_string());
+        if old_area == area { break }
+    }
 
+    println!("{}", area.total_occupied_count())
 }
