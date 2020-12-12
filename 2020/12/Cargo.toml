@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 aoc-2020-common = { path = "../common/" }
+num_enum = "0.5.1"
+

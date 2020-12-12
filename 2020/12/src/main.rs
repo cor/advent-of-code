@@ -1,12 +1,24 @@
 use aoc_2020_common::common::load_file;
+use num_enum::IntoPrimitive;
+use num_enum::TryFromPrimitive;
 use std::str::FromStr;
+use std::convert::TryFrom;
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Clone, IntoPrimitive, TryFromPrimitive)]
+#[repr(usize)]
 enum Direction {
     North,
-    South,
     East,
+    South,
     West,
+}
+
+impl Direction {
+    fn rotated_by(&self, n: i64) -> Direction {
+        let start: usize = self.clone().into();
+
+        Direction::try_from(((start as i64 + n + 4) % 4) as usize).unwrap()
+    }
 }
 
 #[derive(Debug)]
@@ -17,10 +29,34 @@ struct Position {
 }
 
 impl Position {
+    const START: Position = Position {
+        x: 0,
+        y: 0,
+        orientation: Direction::East,
+    };
+
     fn manhattan_distance(&self) -> i64 {
-        self.x.abs() + self.x.abs()
+        self.x.abs() + self.y.abs()
+    }
+
+    fn apply_instruction(&mut self, instruction: Instruction) {
+        match instruction {
+            Instruction::Move(direction, n) => self.move_in_direction(&direction, n),
+            Instruction::Turn(n) => self.orientation = self.orientation.rotated_by(n),
+            Instruction::Forward(n) => self.move_in_direction(&self.orientation.clone(), n),
+        }
+    }
+
+    fn move_in_direction(&mut self, direction: &Direction, distance: i64) {
+        match direction {
+            Direction::North => self.y += distance,
+            Direction::East => self.x += distance,
+            Direction::South => self.y -= distance,
+            Direction::West => self.x -= distance,
+        }
     }
 }
+
 #[derive(Debug)]
 enum Instruction {
     Move(Direction, i64),
@@ -59,5 +95,11 @@ fn main() {
         .filter_map(Result::ok)
         .collect();
 
-    println!("{:?}", instructions);
+    let mut position = Position::START;
+
+    for instruction in instructions {
+        position.apply_instruction(instruction);
+    }
+
+    println!("{:?}", position.manhattan_distance());
 }
