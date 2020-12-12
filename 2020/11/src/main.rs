@@ -46,7 +46,29 @@ impl Area {
         }
     }
 
-    fn next(&self) -> Area {
+    fn simulation_1(&self) -> usize {
+        let mut area = self.clone();
+        loop {
+            let old_area = area.clone();
+            area = area.next_1();
+            if old_area == area { break }
+        }
+
+        area.total_occupied_count()
+    }
+
+    fn simulation_2(&self) -> usize {
+        let mut area = self.clone();
+        loop {
+            let old_area = area.clone();
+            area = area.next_2();
+            if old_area == area { break }
+        }
+
+        area.total_occupied_count()
+    }
+
+    fn next_1(&self) -> Area {
         let mut a = self.clone();
         for y in 0..self.height {
             for x in 0..self.width {
@@ -56,6 +78,23 @@ impl Area {
                 a[point] = match (&self[point], occ_count) {
                     (Field::Seat, 0) => Field::Occupied,
                     (Field::Occupied, x) if x >= 4 => Field::Seat,
+                    _ => continue,
+                }
+            }
+        }
+        a
+    }
+
+    fn next_2(&self) -> Area {
+        let mut a = self.clone();
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let point = (x,y);
+                let occ_count = self.ray_occupied_count(&point);
+
+                a[point] = match (&self[point], occ_count) {
+                    (Field::Seat, 0) => Field::Occupied,
+                    (Field::Occupied, x) if x >= 5 => Field::Seat,
                     _ => continue,
                 }
             }
@@ -81,6 +120,33 @@ impl Area {
             .map(|&(x, y)| (x as usize, y as usize))
             .filter(|&p| self[p] == Field::Occupied)
             .count()
+    }
+
+    fn ray_occupied_count(&self, point: &(usize, usize)) -> usize {
+        let (x, y) = (point.0 as isize, point.1 as isize);
+        [
+            (-1, -1), (-1, 0), (-1, 1),
+            (0, -1), (0, 1),
+            (1, -1), (1, 0), (1, 1),
+        ].iter()
+            .map(|delta| {
+                let (mut xa, mut ya) = (x, y);
+                loop {
+                    // extend ray by adding delta to acc
+                    xa += delta.0; ya += delta.1;
+
+                    // check if we've hit the edge of the area
+                    if !self.in_bounds(&(xa, ya)) { return 0 };
+
+                    // check current end of ray
+                    match self[(xa as usize, ya as usize)] {
+                        Field::Floor => continue,
+                        Field::Occupied => return 1,
+                        Field::Seat => return 0,
+                    };
+                }
+            })
+            .sum()
     }
 
     fn total_occupied_count(&self) -> usize {
@@ -131,15 +197,8 @@ impl ToString for Area {
 
 fn main() {
     let input = load_file("./input/1.txt");
-    let mut area = Area::from(&input);
+    let area = Area::from(&input);
 
-    loop {
-        let old_area = area.clone();
-        area = area.next();
-        // println!("{}", area.to_string());
-
-        if old_area == area { break }
-    }
-
-    println!("{}", area.total_occupied_count())
+    println!("{}", area.simulation_1());
+    println!("{}", area.simulation_2());
 }
