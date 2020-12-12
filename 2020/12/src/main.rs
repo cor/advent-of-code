@@ -4,6 +4,8 @@ use num_enum::TryFromPrimitive;
 use std::str::FromStr;
 use std::convert::TryFrom;
 
+// NOTE: I really dislike the extensibility used for this day.
+
 #[derive(Debug, Eq, PartialEq, Clone, Copy, IntoPrimitive, TryFromPrimitive)]
 #[repr(usize)]
 enum Direction {
@@ -25,7 +27,7 @@ impl Direction {
 struct Position {
     x: i64,
     y: i64,
-    orientation: Direction,
+    orientation: Direction, // Unused for part 1
     wx: i64, // Unused for part 1
     wy: i64, // Unused for part 1
 }
@@ -63,7 +65,16 @@ impl Position {
     fn apply_instruction_2(&mut self, instruction: &Instruction) {
         match instruction {
             Instruction::Move(direction, n) => self.move_waypoint_in_direction(&direction, *n),
-            Instruction::Turn(n) =>  self.orientation = self.orientation.rotated_by(*n),
+            Instruction::Turn(n) => {
+                let old_wx = self.wx;
+                let old_wy = self.wy;
+                match (n + 4) % 4 {
+                    1 => { self.wx = old_wy; self.wy = -old_wx },
+                    2 => { self.wx = -old_wx; self.wy = -old_wy },
+                    3 => { self.wx = -old_wy; self.wy = old_wx},
+                    _ => panic!("Incorrect Turn")
+                }
+            },
             Instruction::Forward(n) => self.move_to_waypoint(*n),
         }
     }
@@ -131,21 +142,17 @@ fn main() {
         .filter_map(Result::ok)
         .collect();
 
+    // Part 1 answer
     let mut position = Position::START;
-
     for instruction in &instructions {
         position.apply_instruction_1(instruction);
     }
-
     println!("{:?}", position.manhattan_distance());
 
+    // Part 2 answer
     let mut position_2 = Position::START;
-
     for instruction in &instructions {
-        println!("{:?}", instruction);
         position_2.apply_instruction_2(instruction);
-        println!("{:?}", position_2);
     }
-
     println!("{:?}", position_2.manhattan_distance());
 }
