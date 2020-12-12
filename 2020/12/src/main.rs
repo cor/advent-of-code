@@ -45,15 +45,6 @@ impl Position {
         self.x.abs() + self.y.abs()
     }
 
-    fn oriented_waypoint(&self) -> (i64, i64) {
-        match self.orientation {
-            Direction::North => (-self.wy, self.wx),
-            Direction::East => (self.wx, self.wy),
-            Direction::South => (self.wy, -self.wx),
-            Direction::West => (-self.wx, -self.wy),
-        }
-    }
-
     fn apply_instruction_1(&mut self, instruction: &Instruction) {
         match instruction {
             Instruction::Move(direction, n) => self.move_in_direction(&direction, *n),
@@ -75,14 +66,11 @@ impl Position {
                     _ => panic!("Incorrect Turn")
                 }
             },
-            Instruction::Forward(n) => self.move_to_waypoint(*n),
+            Instruction::Forward(n) => {
+                self.x += self.wx * n;
+                self.y += self.wy * n;
+            },
         }
-    }
-
-    fn move_to_waypoint(&mut self, times: i64) {
-        let (dx, dy) = self.oriented_waypoint();
-        self.x += dx * times;
-        self.y += dy * times;
     }
 
     fn move_in_direction(&mut self, direction: &Direction, distance: i64) {
