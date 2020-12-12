@@ -105,48 +105,47 @@ impl Area {
     fn in_bounds(&self, point: &(isize, isize)) -> bool {
         let (x, y) = point;
 
-
         *x >= 0 && *x < self.width as isize && *y >= 0 && *y < self.height as isize
     }
 
     fn adjacent_occupied_count(&self, point: &(usize, usize)) -> usize {
         let (x, y) = (point.0 as isize, point.1 as isize);
-        [
+        [ // Neighboring fields
             (x-1, y-1), (x-1, y), (x-1, y+1),
             (x, y-1), (x, y+1),
             (x+1, y-1), (x+1, y), (x+1, y+1),
         ].iter()
-            .filter(|&p| self.in_bounds(p))
-            .map(|&(x, y)| (x as usize, y as usize))
-            .filter(|&p| self[p] == Field::Occupied)
+            .filter(|&point| {
+                if !self.in_bounds(point) { return false }
+                return self[(point.0 as usize, point.1 as usize)] == Field::Occupied
+            })
             .count()
     }
 
     fn ray_occupied_count(&self, point: &(usize, usize)) -> usize {
-        let (x, y) = (point.0 as isize, point.1 as isize);
-        [
+        [ // Directions to shot rays in
             (-1, -1), (-1, 0), (-1, 1),
             (0, -1), (0, 1),
             (1, -1), (1, 0), (1, 1),
         ].iter()
-            .map(|delta| {
-                let (mut xa, mut ya) = (x, y);
+            .filter(|delta| {
+                let (mut x, mut y) = (point.0 as isize, point.1 as isize);
                 loop {
                     // extend ray by adding delta to acc
-                    xa += delta.0; ya += delta.1;
+                    x += delta.0; y += delta.1;
 
                     // check if we've hit the edge of the area
-                    if !self.in_bounds(&(xa, ya)) { return 0 };
+                    if !self.in_bounds(&(x, y)) { return false };
 
                     // check current end of ray
-                    match self[(xa as usize, ya as usize)] {
+                    match self[(x as usize, y as usize)] {
                         Field::Floor => continue,
-                        Field::Occupied => return 1,
-                        Field::Seat => return 0,
+                        Field::Occupied => return true,
+                        Field::Seat => return false,
                     };
                 }
             })
-            .sum()
+            .count()
     }
 
     fn total_occupied_count(&self) -> usize {
@@ -179,7 +178,7 @@ impl IndexMut<(usize, usize)> for Area {
     }
 }
 
-impl ToString for Area {
+impl ToString for Area { // For debugging. Unused in end result
     fn to_string(&self) -> String {
         let mut s = String::new();
 
