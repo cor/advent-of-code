@@ -161,7 +161,7 @@ impl Index<(usize, usize)> for Area {
 
     fn index(&self, index: (usize, usize)) -> &Self::Output {
         if index.0 >= self.width || index.1 >= self.height {
-            panic!("Accessing out of range");
+            panic!("Area index out of range");
         }
 
         return &self.fields[index.0 + index.1 * self.width];
@@ -171,7 +171,7 @@ impl Index<(usize, usize)> for Area {
 impl IndexMut<(usize, usize)> for Area {
     fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
         if index.0 >= self.width || index.1 >= self.height {
-            panic!("Accessing out of range");
+            panic!("Area index out of range");
         }
 
         return &mut self.fields[index.0 + index.1 * self.width];
