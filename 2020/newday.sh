@@ -6,6 +6,7 @@ echo "aoc-2020-common = { path = \"../common/\" }" >> ./$1/Cargo.toml
 
 mkdir $1/input
 
+touch $1/input/example.txt
 touch $1/input/1.txt
 
 echo 'use aoc_2020_common::common::load_file;
