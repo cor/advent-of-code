@@ -2,13 +2,10 @@ use aoc_2020_common::common::load_file;
 use std::str::FromStr;
 use crate::Bus::Unavailable;
 use std::num::ParseIntError;
-
-mod chinese_remainder;
-use chinese_remainder::chinese_remainder;
+use ring_algorithm::chinese_remainder_theorem;
 
 
 /// Part 1, done with iterators
-
 
 #[derive(Debug)]
 enum Bus {
@@ -141,7 +138,7 @@ fn part_2(input: &str) -> u64 {
         .map(Bus2::residues_modulii)
         .unzip();
 
-    chinese_remainder(&*residues, &*modulii).unwrap() as u64
+    chinese_remainder_theorem(&residues, &modulii).unwrap() as u64
 }
 
 fn main() {
