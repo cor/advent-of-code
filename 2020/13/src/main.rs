@@ -3,6 +3,9 @@ use std::str::FromStr;
 use crate::Bus::Unavailable;
 use std::num::ParseIntError;
 
+mod chinese_remainder;
+use chinese_remainder::chinese_remainder;
+
 
 /// Part 1, done with iterators
 
@@ -102,13 +105,13 @@ fn part_1(input: &str) -> u64 {
 
 #[derive(Debug)]
 struct Bus2 {
-    id: u64,
-    index: u64,
+    id: i64,
+    index: i64,
 }
 
 impl Bus2 {
-    fn arrives(&self, time: u64) -> bool {
-        (time + self.index) % self.id == 0
+    fn residues_modulii(&self) -> (i64, i64) {
+        (self.id - self.index, self.id)
     }
 }
 
@@ -122,8 +125,8 @@ fn parse_busses(s: &str) -> Vec<Bus2> {
             match s {
                 "x" => None,
                 n => Some(Bus2 {
-                    index: index as u64,
-                    id: n.parse::<u64>().unwrap()
+                    index: index as i64,
+                    id: n.parse::<i64>().unwrap()
                 })
             }
         })
@@ -132,26 +135,17 @@ fn parse_busses(s: &str) -> Vec<Bus2> {
 
 fn part_2(input: &str) -> u64 {
     let busses = parse_busses(input);
-    let bus0id = busses[0].id;
 
-    let mut n: u64 = 0;
-    loop {
-        if n % 1_000_000_000 == 0 {
-            println!("{}", n);
-        }
+    let (residues, modulii): (Vec<i64>, Vec<i64>) = busses
+        .iter()
+        .map(Bus2::residues_modulii)
+        .unzip();
 
-        n += bus0id;
-
-        if busses.iter().all(|bus| bus.arrives(n)) {
-            return n;
-        }
-    };
+    chinese_remainder(&*residues, &*modulii).unwrap() as u64
 }
 
 fn main() {
     let input = load_file("./input/1.txt");
-
-
 
     println!("{}", part_1(&input));
     println!("{}", part_2(&input));
