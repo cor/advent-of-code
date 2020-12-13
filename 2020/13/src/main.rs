@@ -21,16 +21,16 @@ impl Bus {
 
 /// Overly complex, but I wanted to try out making a custom Iterator
 #[derive(Debug)]
-struct BusIterator {
-    id: u64,
+struct StopIterator {
+    bus_id: u64,
     index: u64,
 }
 
-impl Iterator for BusIterator {
+impl Iterator for StopIterator {
     type Item = u64;
     fn next(&mut self) -> Option<u64> {
         self.index += 1;
-        Some(self.index * self.id)
+        Some(self.index * self.bus_id)
     }
 }
 
@@ -64,26 +64,31 @@ fn main() {
         .filter_map(Result::ok)
         .collect();
 
-    // Create an BusIterator for every bus that is available
-    let mut bus_iters: Vec<BusIterator> = busses
+    // Create an StopIterator for every Bus that is available
+    let mut stop_iters: Vec<StopIterator> = busses
         .iter()
         .filter_map(Bus::available)
-        .map(|id| BusIterator {
-            id,
+        .map(|id| StopIterator {
+            bus_id: id,
             index: 0,
         })
         .collect();
 
-    // Find the earliest bus
-    let (bus_id, departure_time) = 'outer: loop {
-        for bus_iter in bus_iters.iter_mut() {
-            let time = bus_iter.next().unwrap();
-            if time >= earliest_time {
-                break 'outer (bus_iter.id, time);
-            }
-        }
-    };
 
-    // Part 1 answer
-    println!("{}", bus_id * (departure_time - earliest_time))
+    let (bus_id, departure_time) = stop_iters
+        .iter_mut()
+        .map(| s| {
+            loop {
+                let stop = s.next().unwrap();
+                if stop >= earliest_time {
+                    return (s.bus_id, stop)
+                }
+            }
+        })
+        .min_by_key(|(_, stop)| stop.clone())
+        .unwrap();
+
+
+    let answer_1 = bus_id * (departure_time - earliest_time);
+    println!("{}", answer_1);
 }
