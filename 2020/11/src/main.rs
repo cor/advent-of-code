@@ -128,7 +128,8 @@ impl Area {
         ].iter()
             .filter(|&point| {
                 if !self.in_bounds(point) { return false }
-                return self[(point.0 as usize, point.1 as usize)] == Field::Occupied
+
+                self[(point.0 as usize, point.1 as usize)] == Field::Occupied
             })
             .count()
     }
@@ -177,7 +178,7 @@ impl Index<(usize, usize)> for Area {
             panic!("Area index out of range");
         }
 
-        return &self.fields[index.0 + index.1 * self.width];
+        &self.fields[index.0 + index.1 * self.width]
     }
 }
 
@@ -187,7 +188,7 @@ impl IndexMut<(usize, usize)> for Area {
             panic!("Area index out of range");
         }
 
-        return &mut self.fields[index.0 + index.1 * self.width];
+        &mut self.fields[index.0 + index.1 * self.width]
     }
 }
 

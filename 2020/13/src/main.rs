@@ -5,7 +5,7 @@ use std::num::ParseIntError;
 use ring_algorithm::chinese_remainder_theorem;
 
 
-/// Part 1, done with iterators
+/// Part 1, Implemented using a custom Iterator
 
 #[derive(Debug)]
 enum Bus {
@@ -56,7 +56,7 @@ impl FromStr for Bus {
 
 
 fn part_1(input: &str) -> u64 {
-    let mut lines = input.lines().into_iter();
+    let mut lines = input.lines();
 
     let earliest_time = lines.next().unwrap().parse::<u64>().unwrap();
 
@@ -89,7 +89,7 @@ fn part_1(input: &str) -> u64 {
                 }
             }
         })
-        .min_by_key(|(_, stop)| stop.clone())
+        .min_by_key(|(_, stop)| *stop)
         .unwrap();
 
 

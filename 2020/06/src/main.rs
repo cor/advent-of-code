@@ -12,7 +12,7 @@ fn main() {
         .sum();
 
     let answer2: usize = groups
-        .map(|group| (group.clone().lines().count(), group))
+        .map(|group| (group.lines().count(), group))
         .map(|(answer_count, answers)| {
             let mut char_counts: HashMap<char, usize> = HashMap::new();
             for c in answers.chars() {

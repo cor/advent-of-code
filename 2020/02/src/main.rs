@@ -37,7 +37,7 @@ impl PasswordTest<'_> {
         PasswordTest {
             lower: range[0].parse().expect("Invalid lower bound in input"),
             upper: range[1].parse().expect("Invalid upper bound in input"),
-            character: requirements[1].chars().nth(0).expect("Invalid char in input"),
+            character: requirements[1].chars().next().expect("Invalid char in input"),
             password: line[1],
         }
     }

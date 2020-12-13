@@ -77,7 +77,7 @@ fn main() {
         .iter()
         .map(|s| s.id())
         .collect();
-    seat_ids.sort();
+    seat_ids.sort_unstable();
 
     // Answer 1
     let answer_1 = seat_ids.iter().max();

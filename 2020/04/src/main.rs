@@ -53,7 +53,7 @@ impl FromStr for Field {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let items: Vec<&str> = s.split(":").collect();
+        let items: Vec<&str> = s.split(':').collect();
         let key = items[0];
         let value = items[1];
 
@@ -91,7 +91,7 @@ impl FromStr for Passport {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let fields = s
             .trim()
-            .split(" ")
+            .split(' ')
             .collect::<Vec<&str>>()
             .iter()
             .map(|f| Field::from_str(f))

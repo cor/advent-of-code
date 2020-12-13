@@ -32,7 +32,7 @@ fn parse_instructions(input: &str) -> Vec<Instruction> {
             };
             let argument = match &cap[2] {
                 "+" => cap[3].parse::<i64>().unwrap(),
-                "-" => -1 * cap[3].parse::<i64>().unwrap(),
+                "-" => -cap[3].parse::<i64>().unwrap(),
                 _ => panic!("Invalid sign before argument"),
             };
 
@@ -41,7 +41,7 @@ fn parse_instructions(input: &str) -> Vec<Instruction> {
         .collect()
 }
 
-fn run_machine_instructions(instructions: &Vec<Instruction>) -> MachineState {
+fn run_machine_instructions(instructions: &[Instruction]) -> MachineState {
     let mut state = MachineState { accumulator: 0, instruction_pointer: 0, finished: false };
     let mut visited_instructions: HashSet<usize> = HashSet::new();
 

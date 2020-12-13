@@ -32,7 +32,7 @@ fn parse_input(input: &str) -> (HashMap<String, Vec<String>>, HashMap<String, Ve
     (can_be_contained_in, contains)
 }
 
-fn add_to_containers(target: &String, containers: &mut Vec<String>, can_be_contained_in: &HashMap<String, Vec<String>>) {
+fn add_to_containers(target: &str, containers: &mut Vec<String>, can_be_contained_in: &HashMap<String, Vec<String>>) {
     if can_be_contained_in.contains_key(target) {
         for container in &can_be_contained_in[target] {
             add_to_containers(container, containers, can_be_contained_in);
@@ -41,7 +41,7 @@ fn add_to_containers(target: &String, containers: &mut Vec<String>, can_be_conta
     }
 }
 
-fn count_bags(target: &String, containers: &HashMap<String, Vec<(usize, String)>>) -> usize {
+fn count_bags(target: &str, containers: &HashMap<String, Vec<(usize, String)>>) -> usize {
     let mut total = 0;
     if containers.contains_key(target) {
         for (count, color) in &containers[target] {
