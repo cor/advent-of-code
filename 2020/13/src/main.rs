@@ -132,13 +132,26 @@ fn parse_busses(s: &str) -> Vec<Bus2> {
 
 fn part_2(input: &str) -> u64 {
     let busses = parse_busses(input);
+    let bus0id = busses[0].id;
 
-    dbg!(busses);
-    0
+    let mut n: u64 = 0;
+    loop {
+        if n % 1_000_000_000 == 0 {
+            println!("{}", n);
+        }
+
+        n += bus0id;
+
+        if busses.iter().all(|bus| bus.arrives(n)) {
+            return n;
+        }
+    };
 }
 
 fn main() {
     let input = load_file("./input/1.txt");
+
+
 
     println!("{}", part_1(&input));
     println!("{}", part_2(&input));
