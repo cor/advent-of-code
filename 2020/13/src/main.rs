@@ -3,6 +3,10 @@ use std::str::FromStr;
 use crate::Bus::Unavailable;
 use std::num::ParseIntError;
 
+
+/// Part 1, done with iterators
+
+
 #[derive(Debug)]
 enum Bus {
     Unavailable,
@@ -50,8 +54,8 @@ impl FromStr for Bus {
     }
 }
 
-fn main() {
-    let input = load_file("./input/1.txt");
+
+fn part_1(input: &str) -> u64 {
     let mut lines = input.lines().into_iter();
 
     let earliest_time = lines.next().unwrap().parse::<u64>().unwrap();
@@ -89,6 +93,53 @@ fn main() {
         .unwrap();
 
 
-    let answer_1 = bus_id * (departure_time - earliest_time);
-    println!("{}", answer_1);
+    bus_id * (departure_time - earliest_time)
+}
+
+
+/// Part 2
+
+
+#[derive(Debug)]
+struct Bus2 {
+    id: u64,
+    index: u64,
+}
+
+impl Bus2 {
+    fn arrives(&self, time: u64) -> bool {
+        (time + self.index) % self.id == 0
+    }
+}
+
+fn parse_busses(s: &str) -> Vec<Bus2> {
+    let snd_line: &str = s.lines().collect::<Vec<&str>>()[1];
+
+    snd_line
+        .split(',')
+        .enumerate()
+        .filter_map(|(index, s)| {
+            match s {
+                "x" => None,
+                n => Some(Bus2 {
+                    index: index as u64,
+                    id: n.parse::<u64>().unwrap()
+                })
+            }
+        })
+        .collect()
+}
+
+fn part_2(input: &str) -> u64 {
+    let busses = parse_busses(input);
+
+    dbg!(busses);
+    0
+}
+
+fn main() {
+    let input = load_file("./input/1.txt");
+
+    println!("{}", part_1(&input));
+    println!("{}", part_2(&input));
 }
