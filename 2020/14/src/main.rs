@@ -1,6 +1,7 @@
 use aoc_2020_common::common::load_file;
 use std::str::FromStr;
 use regex::Regex;
+use std::collections::HashMap;
 
 #[macro_use]
 extern crate lazy_static;
@@ -39,7 +40,7 @@ impl FromStr for Instruction {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 struct Mask {
     ones: u64,  // All 0, except for the bits that should be set to 1
     zeros: u64, // All 1, except for the bits that should be set to 0
@@ -51,6 +52,7 @@ impl Mask {
         (target | self.ones) & self.zeros
     }
 
+    #[allow(dead_code)]
     fn print(&self) {
         println!("{:64b}", self.zeros);
         println!("{:64b}", self.ones);
@@ -79,7 +81,7 @@ impl FromStr for Mask {
 
 
 fn main() {
-    let input = load_file("./input/example.txt");
+    let input = load_file("./input/1.txt");
 
     let instructions: Vec<Instruction> = input
         .lines()
@@ -87,9 +89,18 @@ fn main() {
         .filter_map(Result::ok)
         .collect();
 
+    // Machine state
+    let mut memory: HashMap<u64, u64> = HashMap::new();
+    let mut mask = Mask { zeros: u64::max_value(), ones: 0 };
 
-    println!("{:#?}", &instructions);
-    if let Instruction::MASK(m) = &instructions[0] {
-        m.print();
+    for instruction in &instructions {
+        match instruction {
+            Instruction::MASK(m) => mask = m.clone(),
+            Instruction::MEM(addr, value) => {
+                *memory.entry(*addr).or_insert(0) = mask.apply(*value)
+            },
+        }
     }
+
+    println!("{:#?}", &memory.values().sum::<u64>());
 }
