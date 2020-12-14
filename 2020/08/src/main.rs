@@ -2,6 +2,7 @@ use aoc_2020_common::common::load_file;
 use regex::Regex;
 use std::collections::HashSet;
 
+
 #[derive(Debug, Clone)]
 enum Operation {
     NOP,
@@ -19,7 +20,6 @@ struct MachineState {
 }
 
 fn parse_instructions(input: &str) -> Vec<Instruction> {
-    let instruction_re: Regex = Regex::new(r#"([a-z]{3}) ([+\-])(\d+)"#).unwrap();
 
     instruction_re
         .captures_iter(&input)
