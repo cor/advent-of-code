@@ -1,0 +1,16 @@
+[package]
+name = "aoc-2020-18"
+version = "0.1.0"
+authors = ["cor <cor@pruijs.nl>"]
+edition = "2018"
+build = "build.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+aoc-2020-common = { path = "../common/" }
+lalrpop-util = "0.19.0"
+regex = "1"
+
+[build-dependencies]
+lalrpop = {version = "0.19.1", features = ["lexer"]}
