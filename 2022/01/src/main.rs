@@ -1,13 +1,16 @@
-use std::env;
-use std::fs;
-
-fn challenge_input() -> String {
-    let args: Vec<String> = env::args().collect();
-    let file_path = &args[1];
-    fs::read_to_string(file_path).expect("Unable to read input file")
-}
+use aoc_2022_common::challenge_input;
 
 fn main() {
     let input = challenge_input();
-    println!("Challenge input:\n{input}");
+    let lines: Vec<&str> = input.lines().collect();
+    let groups: Vec<u64> = lines
+        .split(|l| l.is_empty())
+        .map(|group| {
+            group
+                .iter()
+                .map(|s| s.parse::<u64>().expect("input contains non-number line"))
+                .sum()
+        })
+        .collect();
+    println!("{}", groups.iter().max().expect("no max group"));
 }
