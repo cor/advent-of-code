@@ -1,16 +1,24 @@
 use aoc_2022_common::challenge_input;
 
 fn main() {
-    let input = challenge_input();
-    let lines: Vec<&str> = input.lines().collect();
-    let groups: Vec<u64> = lines
+    let callories: Vec<Vec<u64>> = parse_input(&challenge_input());
+
+    println!("{}", part_1(&callories).expect("no groups in input"));
+}
+
+fn parse_input(input: &str) -> Vec<Vec<u64>> {
+    input
+        .lines()
+        .collect::<Vec<&str>>()
         .split(|l| l.is_empty())
-        .map(|group| {
-            group
-                .iter()
-                .map(|s| s.parse::<u64>().expect("input contains non-number line"))
-                .sum()
+        .map(|g| {
+            g.iter()
+                .map(|s| s.parse::<u64>().expect("non-number line"))
+                .collect()
         })
-        .collect();
-    println!("{}", groups.iter().max().expect("no max group"));
+        .collect()
+}
+
+fn part_1(callories: &[Vec<u64>]) -> Option<u64> {
+    callories.iter().map(|group| group.iter().sum()).max()
 }
