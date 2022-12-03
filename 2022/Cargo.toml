@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+  "common",
   "01",
-  "common"
+  "02"
 ]
