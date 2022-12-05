@@ -1,7 +1,15 @@
 use aoc_2022_common::challenge_input;
+use regex::Regex;
 
 fn main() {
-    let input: String = challenge_input();
+    let (mut containers, instructions) = parse_input(&challenge_input());
+    containers[2].pop();
+
+    dbg!(containers);
+    dbg!(instructions);
+}
+
+fn parse_input(input: &str) -> (Vec<Vec<char>>, Vec<Instruction>) {
     let lines = input.lines().collect::<Vec<_>>();
     let mut split_iter = lines.split(|l| l.is_empty());
     let containers = split_iter.next().expect("Missing containers").to_vec();
@@ -9,7 +17,7 @@ fn main() {
 
     dbg!(&containers);
 
-    let mut containers: Vec<Vec<char>> = transpose(
+    let containers: Vec<Vec<char>> = transpose(
         containers[..containers.len() - 1]
             .iter()
             .map(|l| {
@@ -32,9 +40,28 @@ fn main() {
     })
     .collect();
 
-    containers[1].pop();
+    let instructions = instructions.iter().map(|&i| Instruction::from(i)).collect();
 
-    dbg!(containers);
+    (containers, instructions)
+}
+
+#[derive(Debug)]
+struct Instruction {
+    pub count: usize,
+    pub from: usize,
+    pub to: usize,
+}
+
+impl From<&str> for Instruction {
+    fn from(input: &str) -> Self {
+        let re = Regex::new(r"move (\d+) from (\d+) to (\d+)").unwrap();
+        let capture = re.captures_iter(input).next().expect("Invalid instruction");
+        Instruction {
+            count: capture[1].parse().unwrap(),
+            from: capture[2].parse().unwrap(),
+            to: capture[3].parse().unwrap(),
+        }
+    }
 }
 
 fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
