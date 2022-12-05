@@ -15,7 +15,7 @@ fn part_1(input: &str) -> u64 {
         .map(|l| l.split_at(l.len() / 2))
         .map(|(a, b)| (to_charset(a), to_charset(b)))
         .filter_map(|(a, b)| a.intersection(&b).next().copied())
-        .map(char_to_priority)
+        .map(to_priority)
         .sum()
 }
 
@@ -35,11 +35,11 @@ fn part_2(input: &str) -> u64 {
                 .copied(),
             _ => panic!("Invalid chunks in input"),
         })
-        .map(char_to_priority)
+        .map(to_priority)
         .sum()
 }
 
-fn char_to_priority(c: char) -> u64 {
+fn to_priority(c: char) -> u64 {
     ((c as u64 - 'A' as u64) + 27) % 58
 }
 
