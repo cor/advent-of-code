@@ -2,47 +2,70 @@ use aoc_2022_common::challenge_input;
 use regex::Regex;
 
 fn main() {
-    let (mut containers, instructions) = parse_input(&challenge_input());
-    containers[2].pop();
-
-    dbg!(containers);
-    dbg!(instructions);
+    let cargo_simulator = CargoSimulator::from(challenge_input().as_str());
+    dbg!(cargo_simulator.simulate());
 }
 
-fn parse_input(input: &str) -> (Vec<Vec<char>>, Vec<Instruction>) {
-    let lines = input.lines().collect::<Vec<_>>();
-    let mut split_iter = lines.split(|l| l.is_empty());
-    let containers = split_iter.next().expect("Missing containers").to_vec();
-    let instructions = split_iter.next().expect("Missing instructions").to_vec();
+#[derive(Debug)]
+struct CargoSimulator {
+    pub containers: Vec<Vec<char>>,
+    pub instructions: Vec<Instruction>,
+}
 
-    dbg!(&containers);
+impl CargoSimulator {
+    pub fn simulate(&self) -> Vec<Vec<char>> {
+        let mut containers = self.containers.clone();
 
-    let containers: Vec<Vec<char>> = transpose(
-        containers[..containers.len() - 1]
-            .iter()
-            .map(|l| {
-                l.chars()
-                    .collect::<Vec<_>>()
-                    .chunks(4)
-                    .map(|c| c[1])
-                    .collect()
-            })
-            .collect(),
-    )
-    .iter()
-    .map(|container| {
-        container
-            .iter()
-            .rev()
-            .filter(|&c| *c != ' ')
-            .copied()
-            .collect()
-    })
-    .collect();
+        for ins in &self.instructions {
+            for _ in 0..ins.count {
+                let to_move = containers[ins.from].pop().unwrap();
+                containers[ins.to].push(to_move);
+            }
+        }
 
-    let instructions = instructions.iter().map(|&i| Instruction::from(i)).collect();
+        containers
+    }
+}
 
-    (containers, instructions)
+impl From<&str> for CargoSimulator {
+    fn from(input: &str) -> Self {
+        let lines = input.lines().collect::<Vec<_>>();
+        let mut split_iter = lines.split(|l| l.is_empty());
+        let containers = split_iter.next().expect("Missing containers").to_vec();
+        let instructions = split_iter.next().expect("Missing instructions").to_vec();
+
+        dbg!(&containers);
+
+        let containers: Vec<Vec<char>> = transpose(
+            containers[..containers.len() - 1]
+                .iter()
+                .map(|l| {
+                    l.chars()
+                        .collect::<Vec<_>>()
+                        .chunks(4)
+                        .map(|c| c[1])
+                        .collect()
+                })
+                .collect(),
+        )
+        .iter()
+        .map(|container| {
+            container
+                .iter()
+                .rev()
+                .filter(|&c| *c != ' ')
+                .copied()
+                .collect()
+        })
+        .collect();
+
+        let instructions = instructions.iter().map(|&i| Instruction::from(i)).collect();
+
+        CargoSimulator {
+            containers,
+            instructions,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -58,8 +81,8 @@ impl From<&str> for Instruction {
         let capture = re.captures_iter(input).next().expect("Invalid instruction");
         Instruction {
             count: capture[1].parse().unwrap(),
-            from: capture[2].parse().unwrap(),
-            to: capture[3].parse().unwrap(),
+            from: capture[2].parse::<usize>().unwrap() - 1,
+            to: capture[3].parse::<usize>().unwrap() - 1,
         }
     }
 }
