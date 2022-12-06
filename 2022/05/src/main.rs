@@ -7,14 +7,16 @@ fn main() {
     println!("{}", crate_mover.part_2());
 }
 
+type Crates = Vec<Vec<char>>;
+
 #[derive(Debug)]
 struct CrateMover {
-    pub crates: Vec<Vec<char>>,
+    pub crates: Crates,
     pub moves: Vec<Move>,
 }
 
 impl CrateMover {
-    pub fn simulate_9000(&self) -> Vec<Vec<char>> {
+    pub fn simulate_9000(&self) -> Crates {
         let mut crates = self.crates.clone();
 
         for &Move { count, from, to } in &self.moves {
@@ -26,7 +28,7 @@ impl CrateMover {
         crates
     }
 
-    pub fn simulate_9001(&self) -> Vec<Vec<char>> {
+    pub fn simulate_9001(&self) -> Crates {
         let mut crates = self.crates.clone();
 
         for &Move { count, from, to } in &self.moves {
@@ -37,7 +39,7 @@ impl CrateMover {
         crates
     }
 
-    pub fn top_crates(mut crates: Vec<Vec<char>>) -> String {
+    pub fn top_crates(mut crates: Crates) -> String {
         crates.iter_mut().filter_map(|l| l.pop()).collect()
     }
 
@@ -52,12 +54,12 @@ impl CrateMover {
 
 impl From<&str> for CrateMover {
     fn from(input: &str) -> Self {
-        let lines = input.lines().collect::<Vec<_>>();
+        let lines: Vec<_> = input.lines().collect();
         let mut split_iter = lines.split(|l| l.is_empty());
         let crates = split_iter.next().expect("No crates").to_vec();
         let moves = split_iter.next().expect("No moves").to_vec();
 
-        let crates: Vec<Vec<char>> = transpose(
+        let crates = transpose(
             crates[..crates.len() - 1]
                 .iter()
                 .map(|line| line.chars().collect())
@@ -68,7 +70,7 @@ impl From<&str> for CrateMover {
         .map(|crat| crat.iter().rev().filter(|&c| *c != ' ').copied().collect())
         .collect();
 
-        let moves = moves.iter().map(|&i| Move::from(i)).collect();
+        let moves = moves.iter().copied().map(Move::from).collect();
 
         CrateMover { crates, moves }
     }
