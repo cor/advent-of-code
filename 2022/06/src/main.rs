@@ -9,6 +9,11 @@ fn main() {
 }
 
 fn first_unique_sequence(signal: &str, len: usize) -> Option<usize> {
-    let chars: Vec<char> = signal.chars().collect();
-    (len..chars.len()).find(|&i| HashSet::<&char>::from_iter(&chars[i - len..i]).len() == len)
+    signal
+        .chars()
+        .collect::<Vec<_>>()
+        .windows(len)
+        .enumerate()
+        .find(|(_, window)| HashSet::<&char>::from_iter(window.iter()).len() == len)
+        .map(|(i, _)| i + len)
 }
