@@ -17,10 +17,10 @@ impl CargoSimulator {
     pub fn simulate_9000(&self) -> Vec<Vec<char>> {
         let mut containers = self.containers.clone();
 
-        for ins in &self.instructions {
-            for _ in 0..ins.count {
-                let to_move = containers[ins.from].pop().unwrap();
-                containers[ins.to].push(to_move);
+        for &Instruction { count, from, to } in &self.instructions {
+            for _ in 0..count {
+                let to_move = containers[from].pop().unwrap();
+                containers[to].push(to_move);
             }
         }
 
@@ -30,10 +30,10 @@ impl CargoSimulator {
     pub fn simulate_9001(&self) -> Vec<Vec<char>> {
         let mut containers = self.containers.clone();
 
-        for ins in &self.instructions {
-            let drain_from = containers[ins.from].len() - ins.count;
-            let mut to_move: Vec<char> = containers[ins.from].drain(drain_from..).collect();
-            containers[ins.to].append(&mut to_move);
+        for &Instruction { count, from, to } in &self.instructions {
+            let drain_from = containers[from].len() - count;
+            let mut to_move: Vec<char> = containers[from].drain(drain_from..).collect();
+            containers[to].append(&mut to_move);
         }
 
         containers
