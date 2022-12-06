@@ -3,7 +3,7 @@ use regex::Regex;
 
 fn main() {
     let cargo_simulator = CargoSimulator::from(challenge_input().as_str());
-    dbg!(cargo_simulator.simulate());
+    println!("{}", cargo_simulator.part_1());
 }
 
 #[derive(Debug)]
@@ -25,6 +25,13 @@ impl CargoSimulator {
 
         containers
     }
+
+    pub fn part_1(&self) -> String {
+        self.simulate()
+            .iter_mut()
+            .filter_map(|l| l.pop())
+            .collect::<String>()
+    }
 }
 
 impl From<&str> for CargoSimulator {
@@ -33,8 +40,6 @@ impl From<&str> for CargoSimulator {
         let mut split_iter = lines.split(|l| l.is_empty());
         let containers = split_iter.next().expect("Missing containers").to_vec();
         let instructions = split_iter.next().expect("Missing instructions").to_vec();
-
-        dbg!(&containers);
 
         let containers: Vec<Vec<char>> = transpose(
             containers[..containers.len() - 1]
