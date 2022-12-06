@@ -4,6 +4,7 @@ use regex::Regex;
 fn main() {
     let cargo_simulator = CargoSimulator::from(challenge_input().as_str());
     println!("{}", cargo_simulator.part_1());
+    println!("{}", cargo_simulator.part_2());
 }
 
 #[derive(Debug)]
@@ -13,7 +14,7 @@ struct CargoSimulator {
 }
 
 impl CargoSimulator {
-    pub fn simulate(&self) -> Vec<Vec<char>> {
+    pub fn simulate_9000(&self) -> Vec<Vec<char>> {
         let mut containers = self.containers.clone();
 
         for ins in &self.instructions {
@@ -26,11 +27,28 @@ impl CargoSimulator {
         containers
     }
 
+    pub fn simulate_9001(&self) -> Vec<Vec<char>> {
+        let mut containers = self.containers.clone();
+
+        for ins in &self.instructions {
+            let drain_from = containers[ins.from].len() - ins.count;
+            let mut to_move: Vec<char> = containers[ins.from].drain(drain_from..).collect();
+            containers[ins.to].append(&mut to_move);
+        }
+
+        containers
+    }
+
+    pub fn read_top_containers(mut containers: Vec<Vec<char>>) -> String {
+        containers.iter_mut().filter_map(|l| l.pop()).collect()
+    }
+
     pub fn part_1(&self) -> String {
-        self.simulate()
-            .iter_mut()
-            .filter_map(|l| l.pop())
-            .collect::<String>()
+        Self::read_top_containers(self.simulate_9000())
+    }
+
+    pub fn part_2(&self) -> String {
+        Self::read_top_containers(self.simulate_9001())
     }
 }
 
