@@ -12,6 +12,6 @@ fn first_unique_sequence(signal: &str, len: usize) -> Option<usize> {
     signal
         .as_bytes()
         .windows(len)
-        .position(|window| window.iter().collect::<HashSet<_>>().len() == len)
-        .map(|i| i + len)
+        .position(|win| win.iter().collect::<HashSet<_>>().len() == len)
+        .map(|pos| pos + len)
 }
