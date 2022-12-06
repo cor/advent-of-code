@@ -23,7 +23,6 @@ impl CrateMover {
                 crates[to].push(to_move);
             }
         }
-
         crates
     }
 
@@ -35,7 +34,6 @@ impl CrateMover {
             let mut drained_crates: Vec<char> = crates[from].drain(drain_from..).collect();
             crates[to].append(&mut drained_crates);
         }
-
         crates
     }
 
@@ -62,13 +60,8 @@ impl From<&str> for CrateMover {
         let crates: Vec<Vec<char>> = transpose(
             crates[..crates.len() - 1]
                 .iter()
-                .map(|l| {
-                    l.chars()
-                        .collect::<Vec<_>>()
-                        .chunks(4)
-                        .map(|c| c[1])
-                        .collect()
-                })
+                .map(|line| line.chars().collect())
+                .map(|cs: Vec<char>| cs.chunks(4).map(|c| c[1]).collect())
                 .collect(),
         )
         .iter()
@@ -91,11 +84,11 @@ struct Move {
 impl From<&str> for Move {
     fn from(input: &str) -> Self {
         let re = Regex::new(r"move (\d+) from (\d+) to (\d+)").unwrap();
-        let capture = re.captures_iter(input).next().expect("Invalid move");
+        let cap = re.captures_iter(input).next().expect("Invalid move");
         Move {
-            count: capture[1].parse().expect("Invalid move"),
-            from: capture[2].parse::<usize>().expect("Invalid move") - 1,
-            to: capture[3].parse::<usize>().expect("Invalid move") - 1,
+            count: cap[1].parse().expect("Invalid move"),
+            from: cap[2].parse::<usize>().expect("Invalid move") - 1,
+            to: cap[3].parse::<usize>().expect("Invalid move") - 1,
         }
     }
 }
@@ -104,11 +97,6 @@ fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
     let len = v[0].len();
     let mut iters: Vec<_> = v.into_iter().map(|n| n.into_iter()).collect();
     (0..len)
-        .map(|_| {
-            iters
-                .iter_mut()
-                .map(|n| n.next().unwrap())
-                .collect::<Vec<T>>()
-        })
+        .map(|_| iters.iter_mut().map(|n| n.next().unwrap()).collect())
         .collect()
 }
