@@ -2,65 +2,65 @@ use aoc_2022_common::challenge_input;
 use regex::Regex;
 
 fn main() {
-    let cargo_simulator = CargoSimulator::from(challenge_input().as_str());
-    println!("{}", cargo_simulator.part_1());
-    println!("{}", cargo_simulator.part_2());
+    let crate_mover = CrateMover::from(challenge_input().as_str());
+    println!("{}", crate_mover.part_1());
+    println!("{}", crate_mover.part_2());
 }
 
 #[derive(Debug)]
-struct CargoSimulator {
-    pub containers: Vec<Vec<char>>,
-    pub instructions: Vec<Instruction>,
+struct CrateMover {
+    pub crates: Vec<Vec<char>>,
+    pub moves: Vec<Move>,
 }
 
-impl CargoSimulator {
+impl CrateMover {
     pub fn simulate_9000(&self) -> Vec<Vec<char>> {
-        let mut containers = self.containers.clone();
+        let mut crates = self.crates.clone();
 
-        for &Instruction { count, from, to } in &self.instructions {
+        for &Move { count, from, to } in &self.moves {
             for _ in 0..count {
-                let to_move = containers[from].pop().unwrap();
-                containers[to].push(to_move);
+                let to_move = crates[from].pop().unwrap();
+                crates[to].push(to_move);
             }
         }
 
-        containers
+        crates
     }
 
     pub fn simulate_9001(&self) -> Vec<Vec<char>> {
-        let mut containers = self.containers.clone();
+        let mut crates = self.crates.clone();
 
-        for &Instruction { count, from, to } in &self.instructions {
-            let drain_from = containers[from].len() - count;
-            let mut to_move: Vec<char> = containers[from].drain(drain_from..).collect();
-            containers[to].append(&mut to_move);
+        for &Move { count, from, to } in &self.moves {
+            let drain_from = crates[from].len() - count;
+            let mut drained_crates: Vec<char> = crates[from].drain(drain_from..).collect();
+            crates[to].append(&mut drained_crates);
         }
 
-        containers
+        crates
     }
 
-    pub fn read_top_containers(mut containers: Vec<Vec<char>>) -> String {
-        containers.iter_mut().filter_map(|l| l.pop()).collect()
+    pub fn top_crates(mut crates: Vec<Vec<char>>) -> String {
+        crates.iter_mut().filter_map(|l| l.pop()).collect()
     }
 
     pub fn part_1(&self) -> String {
-        Self::read_top_containers(self.simulate_9000())
+        Self::top_crates(self.simulate_9000())
     }
 
     pub fn part_2(&self) -> String {
-        Self::read_top_containers(self.simulate_9001())
+        Self::top_crates(self.simulate_9001())
     }
 }
 
-impl From<&str> for CargoSimulator {
+impl From<&str> for CrateMover {
     fn from(input: &str) -> Self {
         let lines = input.lines().collect::<Vec<_>>();
         let mut split_iter = lines.split(|l| l.is_empty());
-        let containers = split_iter.next().expect("Missing containers").to_vec();
-        let instructions = split_iter.next().expect("Missing instructions").to_vec();
+        let crates = split_iter.next().expect("No crates").to_vec();
+        let moves = split_iter.next().expect("No moves").to_vec();
 
-        let containers: Vec<Vec<char>> = transpose(
-            containers[..containers.len() - 1]
+        let crates: Vec<Vec<char>> = transpose(
+            crates[..crates.len() - 1]
                 .iter()
                 .map(|l| {
                     l.chars()
@@ -72,40 +72,30 @@ impl From<&str> for CargoSimulator {
                 .collect(),
         )
         .iter()
-        .map(|container| {
-            container
-                .iter()
-                .rev()
-                .filter(|&c| *c != ' ')
-                .copied()
-                .collect()
-        })
+        .map(|crat| crat.iter().rev().filter(|&c| *c != ' ').copied().collect())
         .collect();
 
-        let instructions = instructions.iter().map(|&i| Instruction::from(i)).collect();
+        let moves = moves.iter().map(|&i| Move::from(i)).collect();
 
-        CargoSimulator {
-            containers,
-            instructions,
-        }
+        CrateMover { crates, moves }
     }
 }
 
 #[derive(Debug)]
-struct Instruction {
+struct Move {
     pub count: usize,
     pub from: usize,
     pub to: usize,
 }
 
-impl From<&str> for Instruction {
+impl From<&str> for Move {
     fn from(input: &str) -> Self {
         let re = Regex::new(r"move (\d+) from (\d+) to (\d+)").unwrap();
-        let capture = re.captures_iter(input).next().expect("Invalid instruction");
-        Instruction {
-            count: capture[1].parse().unwrap(),
-            from: capture[2].parse::<usize>().unwrap() - 1,
-            to: capture[3].parse::<usize>().unwrap() - 1,
+        let capture = re.captures_iter(input).next().expect("Invalid move");
+        Move {
+            count: capture[1].parse().expect("Invalid move"),
+            from: capture[2].parse::<usize>().expect("Invalid move") - 1,
+            to: capture[3].parse::<usize>().expect("Invalid move") - 1,
         }
     }
 }
