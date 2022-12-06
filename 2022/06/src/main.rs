@@ -10,10 +10,8 @@ fn main() {
 
 fn first_unique_sequence(signal: &str, len: usize) -> Option<usize> {
     signal
-        .chars()
-        .collect::<Vec<_>>()
+        .as_bytes()
         .windows(len)
-        .enumerate()
-        .find(|(_, window)| HashSet::<&char>::from_iter(window.iter()).len() == len)
-        .map(|(i, _)| i + len)
+        .position(|window| window.iter().collect::<HashSet<_>>().len() == len)
+        .map(|i| i + len)
 }
