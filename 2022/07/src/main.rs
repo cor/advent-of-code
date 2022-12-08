@@ -2,12 +2,36 @@ use std::collections::HashMap;
 
 use aoc_2022_common::challenge_input;
 
+/// We want to convert [`Command`]s to this structure
 #[derive(Debug, Eq, PartialEq)]
 enum Node {
     File(u64),
     Directory(HashMap<String, Node>),
 }
 
+impl Node {
+    pub fn total_size(&self) -> u64 {
+        match self {
+            Node::File(size) => *size,
+            Node::Directory(nodes) => nodes.iter().map(|(_, node)| node.total_size()).sum(),
+        }
+    }
+
+    pub fn part_1(&self) -> u64 {
+        match self {
+            Node::File(_) => 0,
+            Node::Directory(nodes) => {
+                (if self.total_size() <= 100000 {
+                    self.total_size()
+                } else {
+                    0
+                }) + nodes.iter().map(|(_, node)| node.part_1()).sum::<u64>()
+            }
+        }
+    }
+}
+
+/// Should be converted to [`Node`]s
 #[derive(Debug, Eq, PartialEq)]
 enum Command {
     Cd(CdLocation),
@@ -30,17 +54,17 @@ fn main() {
     let commands = parse_input(challenge_input());
     let fs = commands_to_fs(commands);
 
-    dbg!(fs);
+    println!("{}", fs.part_1());
 }
 
 /// TODO: make less ugly
 fn parse_input(input: String) -> Vec<Command> {
-    let split = input.split("\n$ ").collect::<Vec<_>>();
+    let serialized_commands = input.split("\n$ ").collect::<Vec<_>>();
 
     let mut parsed_input = Vec::new();
 
-    for item in &split[1..] {
-        let lines = item.lines().collect::<Vec<_>>();
+    for serialized_command in &serialized_commands[1..] {
+        let lines = serialized_command.lines().collect::<Vec<_>>();
 
         parsed_input.push(if lines[0] == "ls" {
             Command::Ls(
