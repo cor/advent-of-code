@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{cmp, collections::HashMap};
 
 use aoc_2022_common::challenge_input;
 
@@ -29,6 +29,27 @@ impl Node {
             }
         }
     }
+
+    pub fn part_2(&self, minimum_size: u64) -> Option<u64> {
+        match self {
+            Node::File(_) => None,
+            Node::Directory(nodes) => {
+                let total_self_size = self.total_size();
+                if total_self_size >= minimum_size {
+                    let smallest_child = nodes
+                        .iter()
+                        .filter_map(|(_, node)| node.part_2(minimum_size))
+                        .min();
+
+                    return match smallest_child {
+                        Some(size) => Some(cmp::min(size, total_self_size)),
+                        None => Some(total_self_size),
+                    };
+                }
+                None
+            }
+        }
+    }
 }
 
 /// Should be converted to [`Node`]s
@@ -55,6 +76,10 @@ fn main() {
     let fs = commands_to_fs(commands);
 
     println!("{}", fs.part_1());
+
+    let minimum_folder_size = 30000000 - (70000000 - fs.total_size());
+
+    println!("{}", fs.part_2(minimum_folder_size).unwrap());
 }
 
 /// TODO: make less ugly
