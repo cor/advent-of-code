@@ -27,43 +27,8 @@ enum CdLocation {
 }
 
 fn main() {
-    let mut fs = Node::Directory(HashMap::new());
     let commands = parse_input(challenge_input());
-
-    let mut current_path: Vec<String> = Vec::new();
-    for command in commands {
-        match command {
-            Command::Cd(CdLocation::Up) => {
-                current_path.pop();
-            }
-            Command::Cd(CdLocation::Directory(str)) => {
-                current_path.push(str);
-            }
-            Command::Ls(output) => {
-                let current_path_clone = current_path.clone();
-                let mut current_node = &mut fs;
-
-                for dir in current_path_clone {
-                    if let Node::Directory(map) = current_node {
-                        current_node = map.get_mut(&dir.to_owned()).unwrap();
-                    }
-                }
-
-                let Node::Directory(map) = current_node else { panic!(); };
-
-                for node in output {
-                    match node {
-                        LsOutput::File(size, name) => {
-                            map.insert(name, Node::File(size));
-                        }
-                        LsOutput::Directory(name) => {
-                            map.insert(name, Node::Directory(HashMap::new()));
-                        }
-                    }
-                }
-            }
-        }
-    }
+    let fs = commands_to_fs(commands);
 
     dbg!(fs);
 }
@@ -105,4 +70,46 @@ fn parse_input(input: String) -> Vec<Command> {
     }
 
     parsed_input
+}
+
+/// TODO: make less ugly
+fn commands_to_fs(commands: Vec<Command>) -> Node {
+    let mut fs = Node::Directory(HashMap::new());
+
+    let mut current_path: Vec<String> = Vec::new();
+    for command in commands {
+        match command {
+            Command::Cd(CdLocation::Up) => {
+                current_path.pop();
+            }
+            Command::Cd(CdLocation::Directory(str)) => {
+                current_path.push(str);
+            }
+            Command::Ls(output) => {
+                let current_path_clone = current_path.clone();
+                let mut current_node = &mut fs;
+
+                for dir in current_path_clone {
+                    if let Node::Directory(map) = current_node {
+                        current_node = map.get_mut(&dir.to_owned()).unwrap();
+                    }
+                }
+
+                let Node::Directory(map) = current_node else { panic!(); };
+
+                for node in output {
+                    match node {
+                        LsOutput::File(size, name) => {
+                            map.insert(name, Node::File(size));
+                        }
+                        LsOutput::Directory(name) => {
+                            map.insert(name, Node::Directory(HashMap::new()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fs
 }
