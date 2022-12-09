@@ -17,75 +17,26 @@ fn main() {
     let visibility_map =
         height_map.map_with_location(|row, col, _| Point::from((row, col)).is_visible(&height_map));
 
-    println!("{height_map}");
-    println!("{visibility_map}");
-
-    // println!("{}"height_map);
-    // println!(visiblity_map.display());
-
-    // let height = height_map.0.len();
-    // let width = height_map.0[0].len();
-
-    // // let height_map = HeightMap::from(challenge_input().as_ref());
-    // // let mut visibility_map = VisibilityMap::from(&height_map);
-
-    // // TODO: Cleanup by abstracting over scan direction
-
-    // for y in 0..height {
-    //     let mut current_height = None;
-    //     for x in 0..width {
-    //         let new_height = Some(height_map.0[y][x]);
-    //         if new_height > current_height {
-    //             visibility_map.0[y][x] = true;
-    //             current_height = new_height;
-    //         }
-    //     }
-    // }
-
-    // for y in 0..height {
-    //     let mut current_height = None;
-    //     for x in (0..width).rev() {
-    //         let new_height = Some(height_map.0[y][x]);
-    //         if new_height > current_height {
-    //             visibility_map.0[y][x] = true;
-    //             current_height = new_height;
-    //         }
-    //     }
-    // }
-
-    // for x in 0..width {
-    //     let mut current_height = None;
-    //     for y in 0..height {
-    //         let new_height = Some(height_map.0[y][x]);
-    //         if new_height > current_height {
-    //             visibility_map.0[y][x] = true;
-    //             current_height = new_height;
-    //         }
-    //     }
-    // }
-
-    // for x in 0..width {
-    //     let mut current_height = None;
-    //     for y in (0..height).rev() {
-    //         let new_height = Some(height_map.0[y][x]);
-    //         if new_height > current_height {
-    //             visibility_map.0[y][x] = true;
-    //             current_height = new_height;
-    //         }
-    //     }
-    // }
-
-    // println!("{}", visibility_map.count());
+    println!("{}", visibility_map.iter().filter(|v| **v).count());
 }
 
 impl Point {
-    pub fn is_visible(&self, map: &DMatrix<u8>) -> bool {
+    pub fn is_visible(&self, height_map: &DMatrix<u8>) -> bool {
+        let self_height = self.on_map(height_map).expect("out of bounds");
         let directions = [Point(0, 1), Point(0, -1), Point(1, 0), Point(-1, 0)];
-        directions
-            .iter()
-            .filter_map(|p| (*self + *p).on_map(map))
-            .count()
-            == 4
+
+        'directions: for dir in directions {
+            let mut current_pos = *self;
+            loop {
+                current_pos = current_pos + dir;
+                match current_pos.on_map(height_map) {
+                    Some(h) if h >= self_height => continue 'directions,
+                    Some(_) => {} // tree is lower than self
+                    None => return true,
+                }
+            }
+        }
+        false
     }
 
     pub fn on_map<T: Copy>(&self, map: &DMatrix<T>) -> Option<T> {
