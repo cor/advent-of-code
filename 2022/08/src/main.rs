@@ -13,6 +13,8 @@ fn main() {
     let height = height_map.0.len();
     let width = height_map.0[0].len();
 
+    // TODO: Cleanup by abstracting over scan direction
+
     for y in 0..height {
         let mut current_height = None;
         for x in 0..width {
