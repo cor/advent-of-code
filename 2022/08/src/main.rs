@@ -1,4 +1,4 @@
-use std::convert::TryInto;
+use std::{convert::TryInto, ops};
 
 use aoc_2022_common::challenge_input;
 use nalgebra::DMatrix;
@@ -9,13 +9,13 @@ struct HeightMap(Vec<Vec<u8>>);
 #[derive(Debug, Eq, PartialEq)]
 struct VisibilityMap(Vec<Vec<bool>>);
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 struct Point(isize, isize);
 
 fn main() {
     let height_map = to_height_map(challenge_input());
     let visibility_map =
-        height_map.map_with_location(|row, col, _| Point::new(row, col).is_visible(&height_map));
+        height_map.map_with_location(|row, col, _| Point::from((row, col)).is_visible(&height_map));
 
     println!("{height_map}");
     println!("{visibility_map}");
@@ -79,14 +79,13 @@ fn main() {
 }
 
 impl Point {
-    pub fn new(row: usize, col: usize) -> Self {
-        Point(row as isize, col as isize)
-    }
-
     pub fn is_visible(&self, map: &DMatrix<u8>) -> bool {
-        let self_height = self.on_map(map).unwrap();
-
-        self_height == 2
+        let directions = [Point(0, 1), Point(0, -1), Point(1, 0), Point(-1, 0)];
+        directions
+            .iter()
+            .filter_map(|p| (*self + *p).on_map(map))
+            .count()
+            == 4
     }
 
     pub fn on_map<T: Copy>(&self, map: &DMatrix<T>) -> Option<T> {
@@ -98,6 +97,20 @@ impl Point {
             (Some(y), Some(x)) => map.get((y, x)).copied(),
             (None, None) | (None, Some(_)) | (Some(_), None) => None,
         }
+    }
+}
+
+impl From<(usize, usize)> for Point {
+    fn from(point: (usize, usize)) -> Self {
+        Point(point.0 as isize, point.1 as isize)
+    }
+}
+
+impl ops::Add<Point> for Point {
+    type Output = Point;
+
+    fn add(self, rhs: Point) -> Point {
+        Point(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
 
