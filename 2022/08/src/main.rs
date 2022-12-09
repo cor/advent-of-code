@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use aoc_2022_common::challenge_input;
 use nalgebra::DMatrix;
 
@@ -7,9 +9,13 @@ struct HeightMap(Vec<Vec<u8>>);
 #[derive(Debug, Eq, PartialEq)]
 struct VisibilityMap(Vec<Vec<bool>>);
 
+#[derive(Debug, Eq, PartialEq)]
+struct Point(isize, isize);
+
 fn main() {
     let height_map = to_height_map(challenge_input());
-    let visibility_map = height_map.map(|_| false);
+    let visibility_map =
+        height_map.map_with_location(|row, col, _| Point::new(row, col).is_visible(&height_map));
 
     println!("{height_map}");
     println!("{visibility_map}");
@@ -72,6 +78,29 @@ fn main() {
     // println!("{}", visibility_map.count());
 }
 
+impl Point {
+    pub fn new(row: usize, col: usize) -> Self {
+        Point(row as isize, col as isize)
+    }
+
+    pub fn is_visible(&self, map: &DMatrix<u8>) -> bool {
+        let self_height = self.on_map(map).unwrap();
+
+        self_height == 2
+    }
+
+    pub fn on_map<T: Copy>(&self, map: &DMatrix<T>) -> Option<T> {
+        let column: Option<usize> = self.1.try_into().ok();
+        let row: Option<usize> = self.0.try_into().ok();
+        let upoint = (row, column);
+
+        match upoint {
+            (Some(y), Some(x)) => map.get((y, x)).copied(),
+            (None, None) | (None, Some(_)) | (Some(_), None) => None,
+        }
+    }
+}
+
 fn to_height_map(input: String) -> DMatrix<u8> {
     let lines: Vec<&str> = input.lines().collect();
     let rows = lines.len();
@@ -83,25 +112,4 @@ fn to_height_map(input: String) -> DMatrix<u8> {
         .collect();
 
     DMatrix::from_row_slice(rows, cols, &height_data)
-}
-
-impl VisibilityMap {
-    pub fn count(&self) -> usize {
-        self.0
-            .iter()
-            .map(|l| l.iter().filter(|v| **v).count())
-            .sum()
-    }
-}
-
-impl From<&HeightMap> for VisibilityMap {
-    fn from(height_map: &HeightMap) -> Self {
-        Self(
-            height_map
-                .0
-                .iter()
-                .map(|l| l.iter().map(|_| false).collect())
-                .collect(),
-        )
-    }
 }
