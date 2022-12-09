@@ -24,6 +24,7 @@
           lib = self.inputs.crane.lib.${system};
           stable = lib.overrideToolchain self'.packages.rust-stable;
         };
+        days = ["01" "02" "03" "04" "05" "06" "07" "08"]; 
       in {
         rust-stable = inputs'.rust-overlay.packages.rust.override {
           extensions = [
@@ -32,18 +33,16 @@
             "clippy"
           ];
         };
-        
-        # TODO map for every day
-        "2022-08" = let build = crane.stable.buildPackage {
+      } // (builtins.listToAttrs (map (day: { name = "2022-${day}"; value = let build = crane.stable.buildPackage {
           src = ./2022;
-          cargoBuildCommand = "cargo build --release -p aoc-2022-08";
+          cargoBuildCommand = "cargo build --release -p aoc-2022-${day}";
         }; in pkgs.writeShellApplication {
-          name = "2022-08";
+          name = "aoc-2022-${day}";
           text = ''
-            ${build}/bin/aoc-2022-08 "$@"
+            ${build}/bin/aoc-2022-${day} "$@"
           '';
         };
-      };
+}) days));
       devShells = {
         default =
           pkgs.mkShell {
