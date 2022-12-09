@@ -34,8 +34,14 @@
         };
         
         # TODO map for every day
-        "2022-01" = crane.stable.buildPackage {
-          src = crane.stable.cleanCargoSource ./2022/01;
+        "2022-08" = let build = crane.stable.buildPackage {
+          src = ./2022;
+          cargoBuildCommand = "cargo build --release -p aoc-2022-08";
+        }; in pkgs.writeShellApplication {
+          name = "2022-08";
+          text = ''
+            ${build}/bin/aoc-2022-08 "$@"
+          '';
         };
       };
       devShells = {
