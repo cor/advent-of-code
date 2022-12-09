@@ -21,7 +21,7 @@
           lib = self.inputs.crane.lib.${system};
           stable = lib.overrideToolchain self'.packages.rust-stable;
         };
-        days = ["01" "02" "03" "04" "05" "06" "07" "08"]; 
+        days = map (pkgs.lib.fixedWidthNumber 2) (pkgs.lib.range 1 8); 
       in {
         rust-stable = inputs'.rust-overlay.packages.rust.override {
           extensions = [
