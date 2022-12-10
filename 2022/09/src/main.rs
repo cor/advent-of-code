@@ -1,4 +1,7 @@
-use std::ops::{Add, Sub};
+use std::{
+    collections::HashSet,
+    ops::{Add, Sub},
+};
 
 use aoc_2022_common::challenge_input;
 
@@ -11,7 +14,9 @@ fn main() {
         states.push(states.last().unwrap().next(&dir));
     }
 
-    dbg!(states);
+    let locations: HashSet<Vec2> = states.iter().map(|s| s.tail).collect();
+
+    println!("{}", locations.len());
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Default)]
@@ -23,34 +28,34 @@ struct State {
 impl State {
     pub fn next(&self, dir: &Vec2) -> Self {
         let head = self.head + *dir;
-        let delta = self.tail - head;
+        let delta = head - self.tail;
 
         State {
             head,
-            tail: self.tail - delta.corrective_move(),
+            tail: self.tail + delta.corrective_move(),
         }
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Default)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Default, Hash)]
 struct Vec2(isize, isize);
 
 impl Vec2 {
     const NORTH: Vec2 = Vec2(0, 1);
-    const NORTH_EAST: Vec2 = Vec2(1, 1);
-    const NORTH_WEST: Vec2 = Vec2(-1, 1);
+    // const NORTH_EAST: Vec2 = Vec2(1, 1);
+    // const NORTH_WEST: Vec2 = Vec2(-1, 1);
     const SOUTH: Vec2 = Vec2(0, -1);
-    const SOUTH_EAST: Vec2 = Vec2(1, -1);
-    const SOUTH_WEST: Vec2 = Vec2(-1, -1);
+    // const SOUTH_EAST: Vec2 = Vec2(1, -1);
+    // const SOUTH_WEST: Vec2 = Vec2(-1, -1);
     const EAST: Vec2 = Vec2(1, 0);
     const WEST: Vec2 = Vec2(-1, 0);
 
     fn corrective_move(&self) -> Vec2 {
         match self {
             Vec2(2, y) => Self::EAST + Vec2(0, *y),
-            Vec2(-2, y) => Self::SOUTH + Vec2(0, *y),
+            Vec2(-2, y) => Self::WEST + Vec2(0, *y),
             Vec2(x, 2) => Self::NORTH + Vec2(*x, 0),
-            Vec2(x, -2) => Self::WEST + Vec2(*x, 0),
+            Vec2(x, -2) => Self::SOUTH + Vec2(*x, 0),
             _ => Self::default(),
         }
     }
