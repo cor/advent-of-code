@@ -6,63 +6,41 @@ use std::{
 use aoc_2022_common::challenge_input;
 
 fn main() {
-    let dirs = parse_input(&challenge_input());
+    let directions = parse_input(&challenge_input());
 
-    let mut states = vec![State::default()];
-    let mut states2 = vec![State2::default()];
+    let mut ropes_1 = vec![Rope([Vec2::default(); 2])];
+    let mut ropes_2 = vec![Rope([Vec2::default(); 10])];
 
-    for dir in dirs {
-        states.push(states.last().unwrap().next(&dir));
-        states2.push(states2.last().unwrap().next(&dir));
+    for direction in directions {
+        ropes_1.push(ropes_1.last().unwrap().next(&direction));
+        ropes_2.push(ropes_2.last().unwrap().next(&direction));
     }
 
-    let locations: HashSet<Vec2> = states.iter().map(|s| s.tail).collect();
-    let locations2: HashSet<Vec2> = states2.iter().map(|s| s.tail[8]).collect();
+    let tail_positions_1: HashSet<Vec2> = ropes_1.iter().map(|s| s.tail()).collect();
+    let tail_positions_2: HashSet<Vec2> = ropes_2.iter().map(|s| s.tail()).collect();
 
-    println!("{}", locations.len());
-    println!("{}", locations2.len());
+    println!("{}", tail_positions_1.len());
+    println!("{}", tail_positions_2.len());
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Default)]
-struct State {
-    pub head: Vec2,
-    pub tail: Vec2,
-}
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+struct Rope<const N: usize>([Vec2; N]);
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Default)]
-struct State2 {
-    pub head: Vec2,
-    pub tail: [Vec2; 9],
-}
-
-impl State2 {
+impl<const N: usize> Rope<N> {
     pub fn next(&self, dir: &Vec2) -> Self {
-        let head = self.head + *dir;
-        let mut new_tail: [Vec2; 9] = [Vec2::default(); 9];
+        let mut new_rope: [Vec2; N] = [Vec2::default(); N];
 
-        for (i, v) in self.tail.iter().enumerate() {
-            let neighbor = if i == 0 { head } else { new_tail[i - 1] };
-
-            let delta = neighbor - *v;
-            new_tail[i] = *v + delta.corrective_move();
+        new_rope[0] = self.0[0] + *dir;
+        for (i, segment) in self.0[1..].iter().enumerate() {
+            let delta = new_rope[i] - *segment;
+            new_rope[i + 1] = *segment + delta.corrective_move();
         }
 
-        State2 {
-            head,
-            tail: new_tail,
-        }
+        Rope(new_rope)
     }
-}
 
-impl State {
-    pub fn next(&self, dir: &Vec2) -> Self {
-        let head = self.head + *dir;
-        let delta = head - self.tail;
-
-        State {
-            head,
-            tail: self.tail + delta.corrective_move(),
-        }
+    pub fn tail(&self) -> Vec2 {
+        self.0[N - 1]
     }
 }
 
@@ -76,20 +54,13 @@ impl Vec2 {
     const WEST: Vec2 = Vec2(-1, 0);
 
     fn corrective_move(&self) -> Vec2 {
-        let norm = |n: isize| {
-            if n >= 1 {
-                1
-            } else if n <= -1 {
-                -1
-            } else {
-                0
-            }
-        };
+        let normalize = |n: isize| (n.cmp(&0) as isize);
+
         match self {
-            Vec2(2, y) => Self::EAST + Vec2(0, norm(*y)),
-            Vec2(-2, y) => Self::WEST + Vec2(0, norm(*y)),
-            Vec2(x, 2) => Self::NORTH + Vec2(norm(*x), 0),
-            Vec2(x, -2) => Self::SOUTH + Vec2(norm(*x), 0),
+            Vec2(2, y) => Self::EAST + Vec2(0, normalize(*y)),
+            Vec2(-2, y) => Self::WEST + Vec2(0, normalize(*y)),
+            Vec2(x, 2) => Self::NORTH + Vec2(normalize(*x), 0),
+            Vec2(x, -2) => Self::SOUTH + Vec2(normalize(*x), 0),
             _ => Self::default(),
         }
     }
