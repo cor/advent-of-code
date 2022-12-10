@@ -86,7 +86,7 @@ impl From<&str> for Vec2 {
             "U" => Vec2::NORTH,
             "L" => Vec2::WEST,
             "D" => Vec2::SOUTH,
-            _ => panic!("invalid char in output"),
+            _ => panic!("invalid direction in output"),
         }
     }
 }
