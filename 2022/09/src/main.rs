@@ -9,20 +9,49 @@ fn main() {
     let dirs = parse_input(&challenge_input());
 
     let mut states = vec![State::default()];
+    let mut states2 = vec![State2::default()];
 
     for dir in dirs {
         states.push(states.last().unwrap().next(&dir));
+        states2.push(states2.last().unwrap().next(&dir));
     }
 
     let locations: HashSet<Vec2> = states.iter().map(|s| s.tail).collect();
+    let locations2: HashSet<Vec2> = states2.iter().map(|s| s.tail[8]).collect();
 
     println!("{}", locations.len());
+    println!("{}", locations2.len());
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy, Default)]
 struct State {
     pub head: Vec2,
     pub tail: Vec2,
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Default)]
+struct State2 {
+    pub head: Vec2,
+    pub tail: [Vec2; 9],
+}
+
+impl State2 {
+    pub fn next(&self, dir: &Vec2) -> Self {
+        let head = self.head + *dir;
+        let mut new_tail: [Vec2; 9] = [Vec2::default(); 9];
+
+        for (i, v) in self.tail.iter().enumerate() {
+            let neighbor = if i == 0 { head } else { new_tail[i - 1] };
+
+            let delta = neighbor - *v;
+            new_tail[i] = *v + delta.corrective_move();
+        }
+
+        State2 {
+            head,
+            tail: new_tail,
+        }
+    }
 }
 
 impl State {
