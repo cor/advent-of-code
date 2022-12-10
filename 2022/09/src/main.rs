@@ -8,19 +8,16 @@ use aoc_2022_common::challenge_input;
 fn main() {
     let directions = parse_input(&challenge_input());
 
-    let mut ropes_1 = vec![Rope([Vec2::default(); 2])];
-    let mut ropes_2 = vec![Rope([Vec2::default(); 10])];
+    println!("{}", unique_tail_places::<2>(&directions));
+    println!("{}", unique_tail_places::<10>(&directions));
+}
 
+fn unique_tail_places<const N: usize>(directions: &Vec<Vec2>) -> usize {
+    let mut ropes = vec![Rope([Vec2::default(); N])];
     for direction in directions {
-        ropes_1.push(ropes_1.last().unwrap().next(&direction));
-        ropes_2.push(ropes_2.last().unwrap().next(&direction));
+        ropes.push(ropes.last().unwrap().next(direction));
     }
-
-    let tail_positions_1: HashSet<Vec2> = ropes_1.iter().map(|s| s.tail()).collect();
-    let tail_positions_2: HashSet<Vec2> = ropes_2.iter().map(|s| s.tail()).collect();
-
-    println!("{}", tail_positions_1.len());
-    println!("{}", tail_positions_2.len());
+    ropes.iter().map(|s| s.tail()).collect::<HashSet<_>>().len()
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
