@@ -1,7 +1,7 @@
-use std::{convert::TryInto, ops};
-
 use aoc_2022_common::challenge_input;
+use derive_more::{Add, AddAssign};
 use nalgebra::DMatrix;
+use std::convert::TryInto;
 
 #[derive(Debug, Eq, PartialEq)]
 struct HeightMap(Vec<Vec<u8>>);
@@ -9,17 +9,18 @@ struct HeightMap(Vec<Vec<u8>>);
 #[derive(Debug, Eq, PartialEq)]
 struct VisibilityMap(Vec<Vec<bool>>);
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Add, AddAssign)]
 struct Point(isize, isize);
 
 const DIRECTIONS: [Point; 4] = [Point(0, 1), Point(0, -1), Point(1, 0), Point(-1, 0)];
 
 fn main() {
     let height_map = to_height_map(challenge_input());
-    let visibility_map =
-        height_map.map_with_location(|row, col, _| Point::from((row, col)).is_visible(&height_map));
-    let scenic_map = height_map
-        .map_with_location(|row, col, _| Point::from((row, col)).scenic_score(&height_map));
+    let visibility_map = height_map
+        .map_with_location(|row, col, _| Point(row as isize, col as isize).is_visible(&height_map));
+    let scenic_map = height_map.map_with_location(|row, col, _| {
+        Point(row as isize, col as isize).scenic_score(&height_map)
+    });
 
     println!("{}", visibility_map.iter().filter(|v| **v).count());
     println!("{}", scenic_map.iter().max().unwrap());
@@ -32,7 +33,7 @@ impl Point {
         'directions: for dir in DIRECTIONS {
             let mut current_pos = *self;
             loop {
-                current_pos = current_pos + dir;
+                current_pos += dir;
                 match current_pos.on_map(height_map) {
                     Some(h) if h >= self_height => continue 'directions,
                     Some(_) => {} // tree is lower than self
@@ -58,7 +59,7 @@ impl Point {
                         break;
                     }
 
-                    current_pos = current_pos + dir;
+                    current_pos += dir;
                 }
 
                 score
@@ -75,20 +76,6 @@ impl Point {
             (Some(y), Some(x)) => map.get((y, x)).copied(),
             (None, None) | (None, Some(_)) | (Some(_), None) => None,
         }
-    }
-}
-
-impl From<(usize, usize)> for Point {
-    fn from(point: (usize, usize)) -> Self {
-        Point(point.0 as isize, point.1 as isize)
-    }
-}
-
-impl ops::Add<Point> for Point {
-    type Output = Point;
-
-    fn add(self, rhs: Point) -> Point {
-        Point(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
 

@@ -1,9 +1,6 @@
-use std::{
-    collections::HashSet,
-    ops::{Add, Sub},
-};
-
 use aoc_2022_common::challenge_input;
+use derive_more::{Add, Sub};
+use std::collections::HashSet;
 
 fn main() {
     let directions = parse_input(&challenge_input());
@@ -41,7 +38,7 @@ impl<const N: usize> Rope<N> {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Default, Hash)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Default, Hash, Add, Sub)]
 struct Vec2(isize, isize);
 
 impl Vec2 {
@@ -60,22 +57,6 @@ impl Vec2 {
             Vec2(x, -2) => Self::SOUTH + Vec2(normalize(*x), 0),
             _ => Self::default(),
         }
-    }
-}
-
-impl Add<Vec2> for Vec2 {
-    type Output = Vec2;
-
-    fn add(self, rhs: Vec2) -> Vec2 {
-        Vec2(self.0 + rhs.0, self.1 + rhs.1)
-    }
-}
-
-impl Sub<Vec2> for Vec2 {
-    type Output = Vec2;
-
-    fn sub(self, rhs: Vec2) -> Vec2 {
-        Vec2(self.0 - rhs.0, self.1 - rhs.1)
     }
 }
 
