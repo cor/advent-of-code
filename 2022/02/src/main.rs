@@ -27,19 +27,12 @@ struct Game(Vec<Turn>);
 struct Game2(Vec<Turn2>);
 
 fn main() {
-    let game = Game::from(challenge_input().as_ref());
-    println!("{}", part_1(&game));
+    let input = challenge_input();
+    let game = Game::from(input.as_ref());
+    let game2 = Game2::from(input.as_ref());
 
-    let game2 = Game2::from(challenge_input().as_ref());
-    println!("{}", part_2(&game2));
-}
-
-fn part_1(game: &Game) -> u64 {
-    game.0.iter().map(|t| t.score()).sum()
-}
-
-fn part_2(game: &Game2) -> u64 {
-    game.0.iter().map(|t| t.score()).sum()
+    println!("{}", game.0.iter().map(Turn::score).sum::<u64>());
+    println!("{}", game2.0.iter().map(Turn2::score).sum::<u64>());
 }
 
 impl Turn {
@@ -49,9 +42,7 @@ impl Turn {
 
         match self {
             Turn(a, b) if a == b => Draw,
-            Turn(Rock, Paper) => Victory,
-            Turn(Paper, Scissors) => Victory,
-            Turn(Scissors, Rock) => Victory,
+            Turn(Rock, Paper) | Turn(Paper, Scissors) | Turn(Scissors, Rock) => Victory,
             _ => Defeat,
         }
     }
@@ -101,41 +92,35 @@ impl From<&str> for Game2 {
 
 impl From<&str> for Turn {
     fn from(value: &str) -> Self {
-        let mut chars = value.chars();
-        let left = Move::from(&chars.next().unwrap());
-        chars.next();
-        let right = Move::from(&chars.next().unwrap());
-        Turn(left, right)
+        let (move1, move2) = value.split_once(' ').unwrap();
+        Turn(move1.into(), move2.into())
     }
 }
 
 impl From<&str> for Turn2 {
     fn from(value: &str) -> Self {
-        let mut chars = value.chars();
-        let left = Move::from(&chars.next().unwrap());
-        chars.next();
-        let right = Outcome::from(&chars.next().unwrap());
-        Turn2(left, right)
+        let (mov, outcome) = value.split_once(' ').unwrap();
+        Turn2(mov.into(), outcome.into())
     }
 }
 
-impl From<&char> for Move {
-    fn from(value: &char) -> Self {
+impl From<&str> for Move {
+    fn from(value: &str) -> Self {
         match value {
-            'A' | 'X' => Self::Rock,
-            'B' | 'Y' => Self::Paper,
-            'C' | 'Z' => Self::Scissors,
+            "A" | "X" => Self::Rock,
+            "B" | "Y" => Self::Paper,
+            "C" | "Z" => Self::Scissors,
             c => panic!("Cannot convert {c} to Move"),
         }
     }
 }
 
-impl From<&char> for Outcome {
-    fn from(value: &char) -> Self {
+impl From<&str> for Outcome {
+    fn from(value: &str) -> Self {
         match value {
-            'X' => Self::Defeat,
-            'Y' => Self::Draw,
-            'Z' => Self::Victory,
+            "X" => Self::Defeat,
+            "Y" => Self::Draw,
+            "Z" => Self::Victory,
             c => panic!("Cannot convert {c} to Move"),
         }
     }

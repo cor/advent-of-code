@@ -12,7 +12,7 @@ fn parse_input(input: &str) -> Vec<u64> {
         .lines()
         .collect::<Vec<&str>>()
         .split(|l| l.is_empty())
-        .map(|g| g.iter().map(|s| s.parse::<u64>().unwrap()).sum())
+        .map(|g| g.iter().flat_map(|s| s.parse::<u64>()).sum())
         .collect()
 }
 

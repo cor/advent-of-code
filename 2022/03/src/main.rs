@@ -44,5 +44,5 @@ fn to_priority(c: char) -> u64 {
 }
 
 fn to_charset(s: &str) -> CharSet {
-    CharSet::from_iter(s.chars())
+    s.chars().collect()
 }

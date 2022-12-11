@@ -40,7 +40,7 @@ impl CrateMover {
     }
 
     pub fn top_crates(mut crates: Crates) -> String {
-        crates.iter_mut().filter_map(|l| l.pop()).collect()
+        crates.iter_mut().filter_map(Vec::pop).collect()
     }
 
     pub fn part_1(&self) -> String {
@@ -97,7 +97,7 @@ impl From<&str> for Move {
 
 fn transpose<T>(v: Vec<Vec<T>>) -> Vec<Vec<T>> {
     let len = v[0].len();
-    let mut iters: Vec<_> = v.into_iter().map(|n| n.into_iter()).collect();
+    let mut iters: Vec<_> = v.into_iter().map(IntoIterator::into_iter).collect();
     (0..len)
         .map(|_| iters.iter_mut().map(|n| n.next().unwrap()).collect())
         .collect()

@@ -21,7 +21,7 @@ impl Node {
         match self {
             Node::File(_) => 0,
             Node::Directory(nodes) => {
-                (if self.total_size() <= 100000 {
+                (if self.total_size() <= 100_000 {
                     self.total_size()
                 } else {
                     0
@@ -72,18 +72,18 @@ enum CdLocation {
 }
 
 fn main() {
-    let commands = parse_input(challenge_input());
+    let commands = parse_input(&challenge_input());
     let fs = commands_to_fs(commands);
 
     println!("{}", fs.part_1());
 
-    let minimum_folder_size = 30000000 - (70000000 - fs.total_size());
+    let minimum_folder_size = 30_000_000 - (70_000_000 - fs.total_size());
 
     println!("{}", fs.part_2(minimum_folder_size).unwrap());
 }
 
 /// TODO: make less ugly
-fn parse_input(input: String) -> Vec<Command> {
+fn parse_input(input: &str) -> Vec<Command> {
     let serialized_commands = input.split("\n$ ").collect::<Vec<_>>();
 
     let mut parsed_input = Vec::new();
@@ -140,7 +140,7 @@ fn commands_to_fs(commands: Vec<Command>) -> Node {
 
                 for dir in current_path_clone {
                     if let Node::Directory(map) = current_node {
-                        current_node = map.get_mut(&dir.to_owned()).unwrap();
+                        current_node = map.get_mut(&dir.clone()).unwrap();
                     }
                 }
 
