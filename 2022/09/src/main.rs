@@ -3,28 +3,28 @@ use derive_more::{Add, Sub};
 use std::collections::HashSet;
 
 fn main() {
-    let directions = parse_input(&challenge_input());
+    let moves = parse_input(&challenge_input());
 
-    println!("{}", unique_tail_places::<2>(&directions));
-    println!("{}", unique_tail_places::<10>(&directions));
+    println!("{}", unique_tail_places::<2>(&moves));
+    println!("{}", unique_tail_places::<10>(&moves));
 }
 
-fn unique_tail_places<const N: usize>(directions: &Vec<Vec2>) -> usize {
+fn unique_tail_places<const N: usize>(moves: &Vec<Vec2>) -> usize {
     let mut ropes = vec![Rope([Vec2::default(); N])];
-    for direction in directions {
-        ropes.push(ropes.last().unwrap().next(direction));
+    for mov in moves {
+        ropes.push(ropes.last().unwrap().next(mov));
     }
-    ropes.iter().map(|s| s.tail()).collect::<HashSet<_>>().len()
+    ropes.iter().map(Rope::tail).collect::<HashSet<_>>().len()
 }
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 struct Rope<const N: usize>([Vec2; N]);
 
 impl<const N: usize> Rope<N> {
-    pub fn next(&self, dir: &Vec2) -> Self {
+    pub fn next(&self, mov: &Vec2) -> Self {
         let mut new_rope: [Vec2; N] = [Vec2::default(); N];
 
-        new_rope[0] = self.0[0] + *dir;
+        new_rope[0] = self.0[0] + *mov;
         for (i, segment) in self.0[1..].iter().enumerate() {
             let delta = new_rope[i] - *segment;
             new_rope[i + 1] = *segment + delta.corrective_move();
@@ -76,9 +76,9 @@ fn parse_input(input: &str) -> Vec<Vec2> {
     input
         .lines()
         .flat_map(|line| {
-            let (dir, count) = line.split_once(' ').unwrap();
+            let (mov, count) = line.split_once(' ').unwrap();
             let count = count.parse::<i32>().unwrap();
-            (0..count).map(|_| Vec2::from(dir)).collect::<Vec<Vec2>>()
+            (0..count).map(|_| Vec2::from(mov)).collect::<Vec<Vec2>>()
         })
         .collect()
 }
