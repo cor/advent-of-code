@@ -1,8 +1,6 @@
-use aoc_2022_common::challenge_input;
-
 #[cfg(test)]
 pub mod tests;
-
+use aoc_2022_common::challenge_input;
 use nom::{
     branch::alt,
     bytes::complete::tag,
@@ -16,7 +14,7 @@ use nom::{
 
 fn main() {
     let input = challenge_input();
-    let (_, monkeys) = Monkey::parse_many(&input).expect("Invalid input!");
+    let (_, monkeys) = Monkey::parse_many(&input).expect("Invalid monkey(s) in input!");
 
     println!("{}", Monkey::business(monkeys.clone(), true));
     println!("{}", Monkey::business(monkeys, false));
@@ -25,7 +23,7 @@ fn main() {
 #[derive(PartialEq, Eq, Debug, Clone)]
 struct Monkey {
     pub items: Vec<u64>,
-    pub operation: Op,
+    pub operation: Operation,
     pub test: u64,
     pub targets: (usize, usize),
     pub inspected: u64,
@@ -35,9 +33,15 @@ impl Monkey {
     pub fn parse(input: &str) -> IResult<&str, Monkey> {
         let (s, (items, operation, test, targets)) = preceded(
             delimited(tag("Monkey "), u64, tag(":\n")),
-            tuple((parse_starting_items, Op::parse, parse_test, parse_targets)),
+            tuple((
+                parse_starting_items,
+                Operation::parse,
+                parse_test,
+                parse_targets,
+            )),
         )(input)?;
 
+        #[allow(clippy::cast_possible_truncation)] // We know that the input wont truncate
         Ok((
             s,
             Monkey {
@@ -71,41 +75,40 @@ impl Monkey {
                         item %= total_multiplier;
                     }
 
-                    let monkey = monkeys[i].clone();
-                    if item % monkey.test == 0 {
-                        monkeys[monkey.targets.0].items.push(item)
+                    let target = if item % monkeys[i].test == 0 {
+                        monkeys[i].targets.0
                     } else {
-                        monkeys[monkey.targets.1].items.push(item)
-                    }
+                        monkeys[i].targets.1
+                    };
 
+                    monkeys[target].items.push(item);
                     monkeys[i].inspected += 1;
                 }
             }
         }
 
         let mut inspection_scores: Vec<u64> = monkeys.iter().map(|m| m.inspected).collect();
-        inspection_scores.sort();
+        inspection_scores.sort_unstable();
         inspection_scores.reverse();
-
         inspection_scores[0] * inspection_scores[1]
     }
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
-enum Op {
+enum Operation {
     Add(u64),
     Times(u64),
     Square,
 }
 
-impl Op {
-    pub fn parse(input: &str) -> IResult<&str, Op> {
+impl Operation {
+    pub fn parse(input: &str) -> IResult<&str, Operation> {
         delimited(
             tag("  Operation: new = "),
             alt((
-                map(tag("old * old"), |_| Op::Square),
-                map(preceded(tag("old * "), u64), Op::Times),
-                map(preceded(tag("old + "), u64), Op::Add),
+                map(tag("old * old"), |_| Operation::Square),
+                map(preceded(tag("old * "), u64), Operation::Times),
+                map(preceded(tag("old + "), u64), Operation::Add),
             )),
             newline,
         )(input)
@@ -113,9 +116,9 @@ impl Op {
 
     pub fn apply(&self, to: u64) -> u64 {
         match self {
-            Op::Add(n) => to + n,
-            Op::Times(n) => to * n,
-            Op::Square => to * to,
+            Operation::Add(n) => to + n,
+            Operation::Times(n) => to * n,
+            Operation::Square => to * to,
         }
     }
 }

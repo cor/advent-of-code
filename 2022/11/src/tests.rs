@@ -9,7 +9,7 @@ fn can_parse_monkey() {
             "",
             Monkey {
                 items: vec![59, 65, 86, 56, 74, 57, 56],
-                operation: Op::Times(17),
+                operation: Operation::Times(17),
                 test: 3,
                 targets: (3, 6),
                 inspected: 0
@@ -31,24 +31,26 @@ fn can_parse_starting_items() {
 #[test]
 fn can_parse_op_times() {
     assert_eq!(
-        Op::parse("  Operation: new = old * 19\n").unwrap().1,
-        Op::Times(19)
+        Operation::parse("  Operation: new = old * 19\n").unwrap().1,
+        Operation::Times(19)
     );
 }
 
 #[test]
 fn can_parse_op_plus() {
     assert_eq!(
-        Op::parse("  Operation: new = old + 24\n").unwrap().1,
-        Op::Add(24)
+        Operation::parse("  Operation: new = old + 24\n").unwrap().1,
+        Operation::Add(24)
     );
 }
 
 #[test]
 fn can_parse_op_square() {
     assert_eq!(
-        Op::parse("  Operation: new = old * old\n").unwrap().1,
-        Op::Square
+        Operation::parse("  Operation: new = old * old\n")
+            .unwrap()
+            .1,
+        Operation::Square
     );
 }
 
