@@ -5,8 +5,8 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::u64,
-    character::{complete::newline, streaming::char},
-    combinator::map,
+    character::{complete::line_ending, streaming::char},
+    combinator::{map, success},
     multi::separated_list0,
     sequence::{delimited, preceded, separated_pair, tuple},
     IResult,
@@ -106,11 +106,11 @@ impl Operation {
         delimited(
             tag("  Operation: new = "),
             alt((
-                map(tag("old * old"), |_| Operation::Square),
+                preceded(tag("old * old"), success(Operation::Square)),
                 map(preceded(tag("old * "), u64), Operation::Times),
                 map(preceded(tag("old + "), u64), Operation::Add),
             )),
-            newline,
+            line_ending,
         )(input)
     }
 
@@ -132,7 +132,7 @@ fn parse_starting_items(input: &str) -> IResult<&str, Vec<u64>> {
 }
 
 fn parse_test(input: &str) -> IResult<&str, u64> {
-    delimited(tag("  Test: divisible by "), u64, newline)(input)
+    delimited(tag("  Test: divisible by "), u64, line_ending)(input)
 }
 
 fn parse_targets(input: &str) -> IResult<&str, (u64, u64)> {
