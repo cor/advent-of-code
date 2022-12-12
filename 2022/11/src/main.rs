@@ -16,41 +16,10 @@ use nom::{
 
 fn main() {
     let input = challenge_input();
-    let (_, mut monkeys) = Monkey::parse_many(&input).expect("Invalid input!");
+    let (_, monkeys) = Monkey::parse_many(&input).expect("Invalid input!");
 
-    let total_multiplier: u64 = monkeys.iter().map(|m| m.test).product();
-
-    for _ in 0..10_000 {
-        for i in 0..monkeys.len() {
-            while let Some(mut item) = monkeys[i].items.pop() {
-                item = match monkeys[i].operation {
-                    Op::Add(n) => item + n,
-                    Op::Times(n) => item * n,
-                    Op::Square => item * item,
-                };
-
-                // prevent ourselves from going crazy
-                item %= total_multiplier;
-                // item /= 3;
-
-                let monkey = monkeys[i].clone();
-                if item % monkey.test == 0 {
-                    monkeys[monkey.targets.0].items.push(item)
-                } else {
-                    monkeys[monkey.targets.1].items.push(item)
-                }
-
-                monkeys[i].inspected += 1;
-            }
-        }
-    }
-
-    let mut inspection_scores: Vec<u64> = monkeys.iter().map(|m| m.inspected).collect();
-    inspection_scores.sort();
-    inspection_scores.reverse();
-    let monkey_business = inspection_scores[0] * inspection_scores[1];
-
-    println!("{}", monkey_business);
+    println!("{}", Monkey::business(monkeys.clone(), true));
+    println!("{}", Monkey::business(monkeys, false));
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -84,6 +53,42 @@ impl Monkey {
     pub fn parse_many(input: &str) -> IResult<&str, Vec<Monkey>> {
         separated_list0(tag("\n\n"), Monkey::parse)(input)
     }
+
+    pub fn business(mut monkeys: Vec<Monkey>, part_1: bool) -> u64 {
+        let total_multiplier: u64 = monkeys.iter().map(|m| m.test).product();
+
+        let rounds = if part_1 { 20 } else { 10_000 };
+
+        for _ in 0..rounds {
+            for i in 0..monkeys.len() {
+                while let Some(mut item) = monkeys[i].items.pop() {
+                    item = monkeys[i].operation.apply(item);
+
+                    // prevent ourselves from going crazy
+                    if part_1 {
+                        item /= 3;
+                    } else {
+                        item %= total_multiplier;
+                    }
+
+                    let monkey = monkeys[i].clone();
+                    if item % monkey.test == 0 {
+                        monkeys[monkey.targets.0].items.push(item)
+                    } else {
+                        monkeys[monkey.targets.1].items.push(item)
+                    }
+
+                    monkeys[i].inspected += 1;
+                }
+            }
+        }
+
+        let mut inspection_scores: Vec<u64> = monkeys.iter().map(|m| m.inspected).collect();
+        inspection_scores.sort();
+        inspection_scores.reverse();
+
+        inspection_scores[0] * inspection_scores[1]
+    }
 }
 
 #[derive(PartialEq, Eq, Debug, Clone)]
@@ -91,14 +96,6 @@ enum Op {
     Add(u64),
     Times(u64),
     Square,
-}
-
-fn parse_starting_items(input: &str) -> IResult<&str, Vec<u64>> {
-    delimited(
-        tag("  Starting items: "),
-        separated_list0(tag(", "), u64),
-        char('\n'),
-    )(input)
 }
 
 impl Op {
@@ -113,6 +110,22 @@ impl Op {
             newline,
         )(input)
     }
+
+    pub fn apply(&self, to: u64) -> u64 {
+        match self {
+            Op::Add(n) => to + n,
+            Op::Times(n) => to * n,
+            Op::Square => to * to,
+        }
+    }
+}
+
+fn parse_starting_items(input: &str) -> IResult<&str, Vec<u64>> {
+    delimited(
+        tag("  Starting items: "),
+        separated_list0(tag(", "), u64),
+        char('\n'),
+    )(input)
 }
 
 fn parse_test(input: &str) -> IResult<&str, u64> {
