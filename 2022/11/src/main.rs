@@ -16,16 +16,50 @@ use nom::{
 
 fn main() {
     let input = challenge_input();
-    let monkeys = Monkey::parse_many(&input);
-    dbg!("{}", monkeys);
+    let (_, mut monkeys) = Monkey::parse_many(&input).expect("Invalid input!");
+
+    let total_multiplier: u64 = monkeys.iter().map(|m| m.test).product();
+
+    for _ in 0..10_000 {
+        for i in 0..monkeys.len() {
+            while let Some(mut item) = monkeys[i].items.pop() {
+                item = match monkeys[i].operation {
+                    Op::Add(n) => item + n,
+                    Op::Times(n) => item * n,
+                    Op::Square => item * item,
+                };
+
+                // prevent ourselves from going crazy
+                item %= total_multiplier;
+                // item /= 3;
+
+                let monkey = monkeys[i].clone();
+                if item % monkey.test == 0 {
+                    monkeys[monkey.targets.0].items.push(item)
+                } else {
+                    monkeys[monkey.targets.1].items.push(item)
+                }
+
+                monkeys[i].inspected += 1;
+            }
+        }
+    }
+
+    let mut inspection_scores: Vec<u64> = monkeys.iter().map(|m| m.inspected).collect();
+    inspection_scores.sort();
+    inspection_scores.reverse();
+    let monkey_business = inspection_scores[0] * inspection_scores[1];
+
+    println!("{}", monkey_business);
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 struct Monkey {
     pub items: Vec<u64>,
     pub operation: Op,
     pub test: u64,
-    pub targets: (u64, u64),
+    pub targets: (usize, usize),
+    pub inspected: u64,
 }
 
 impl Monkey {
@@ -41,7 +75,8 @@ impl Monkey {
                 items,
                 operation,
                 test,
-                targets,
+                targets: (targets.0 as usize, targets.1 as usize),
+                inspected: 0,
             },
         ))
     }
@@ -51,7 +86,7 @@ impl Monkey {
     }
 }
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 enum Op {
     Add(u64),
     Times(u64),

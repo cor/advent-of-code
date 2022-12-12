@@ -11,7 +11,8 @@ fn can_parse_monkey() {
                 items: vec![59, 65, 86, 56, 74, 57, 56],
                 operation: Op::Times(17),
                 test: 3,
-                targets: (3, 6)
+                targets: (3, 6),
+                inspected: 0
             }
         ))
     );
