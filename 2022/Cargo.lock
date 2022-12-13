@@ -95,6 +95,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc-2022-12"
+version = "0.1.0"
+dependencies = [
+ "aoc-2022-common",
+ "nalgebra",
+]
+
+[[package]]
 name = "aoc-2022-common"
 version = "0.1.0"
 
