@@ -15,31 +15,21 @@ fn main() {
     let input = challenge_input();
     let map = parse_input(&input);
 
-    let start_index = map
-        .iter()
-        .position(|&c| c == MapItem::Start)
-        .expect("No start on map");
-    let start = Point(
-        (start_index / map.nrows()) as isize,
-        (start_index % map.nrows()) as isize,
-    );
+    let start_index = map.iter().position(|&c| c == MapItem::Start).unwrap();
+    let start = Point::from_matrix_index(start_index, map.nrows());
 
-    println!(
-        "{}",
-        start
-            .steps_to_end(&map)
-            .expect("part 1 should have a solution")
-    );
+    let part_1 = start.steps_to_end(&map).expect("no part 1 solution");
+    println!("{}", part_1);
 
+    // Can be made faster by caching visited startpoints or by multithreading
     let part_2 = map
         .iter()
         .enumerate()
         .filter(|(_, &item)| item == MapItem::Start || item == MapItem::Level(1))
-        .map(|(i, _)| Point((i / map.nrows()) as isize, (i % map.nrows()) as isize))
+        .map(|(i, _)| Point::from_matrix_index(i, map.ncols()))
         .filter_map(|p| p.steps_to_end(&map))
         .min()
-        .unwrap();
-
+        .expect("no part 2 solution");
     println!("{}", part_2);
 }
 
@@ -62,6 +52,15 @@ fn parse_input(input: &str) -> DMatrix<MapItem> {
 }
 
 impl Point {
+    /// [`nalgebra`] probably has a better way to do this, but I couldn't find it in the docs.
+    #[allow(clippy::cast_possible_wrap)]
+    pub fn from_matrix_index(index: usize, matrix_width: usize) -> Self {
+        Point(
+            (index / matrix_width) as isize,
+            (index % matrix_width) as isize,
+        )
+    }
+
     fn steps_to_end(&self, map: &DMatrix<MapItem>) -> Option<usize> {
         let mut steps = Vec::<HashSet<Point>>::new();
         let mut visited = HashSet::<Point>::new();
@@ -79,7 +78,7 @@ impl Point {
 
             if next_steps.is_empty() {
                 // It is impossible to go to the end from this starting position
-                // as we have not reached the end yet, but there are no next_steps
+                // as we have not reached the end yet, but there are no next steps.
                 return None;
             }
 
@@ -103,11 +102,10 @@ impl Point {
             .filter(|&&dir| {
                 (*self + dir)
                     .on_map(map)
-                    .map(|neighbor_item| self_item.can_move_to(neighbor_item))
-                    .unwrap_or(false)
+                    .map_or(false, |neighbor_item| self_item.can_move_to(neighbor_item))
             })
             .map(|&dir| *self + dir)
-            .collect::<Vec<_>>()
+            .collect()
     }
 
     pub fn on_map<T: Copy>(&self, map: &DMatrix<T>) -> Option<T> {
