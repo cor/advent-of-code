@@ -7,4 +7,5 @@ edition = "2021"
 
 [dependencies]
 aoc-2022-common = { path = "../common/" }
+derive_more = "0.99.17"
 nalgebra = "0.31.4"
