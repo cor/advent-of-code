@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashSet, fmt::Display};
 
 use aoc_2022_common::challenge_input;
 
@@ -6,7 +6,7 @@ use derive_more::{Add, AddAssign};
 use nalgebra::DMatrix;
 
 // copied form day 8
-#[derive(Debug, Eq, PartialEq, Clone, Copy, Add, AddAssign)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy, Add, AddAssign, Hash)]
 struct Point(isize, isize);
 
 const DIRECTIONS: [Point; 4] = [Point(0, 1), Point(0, -1), Point(1, 0), Point(-1, 0)];
@@ -14,7 +14,6 @@ const DIRECTIONS: [Point; 4] = [Point(0, 1), Point(0, -1), Point(1, 0), Point(-1
 fn main() {
     let input = challenge_input();
     let (map, _height, width) = parse_input(&input);
-    println!("{}", map);
 
     let start_index = map
         .iter()
@@ -24,11 +23,32 @@ fn main() {
         (start_index / width) as isize,
         (start_index % width) as isize,
     );
-    dbg!(start);
-    dbg!(start.neighbors_to_go_to(&map));
-    dbg!(Point(2, 3).neighbors_to_go_to(&map));
-    dbg!(Point(4, 1).on_map(&map));
-    dbg!(start_index);
+
+    let mut steps = Vec::<HashSet<Point>>::new();
+    let mut visited = HashSet::<Point>::new();
+    visited.insert(start);
+    steps.push(visited.clone());
+
+    for step_number in 1.. {
+        let next_steps: HashSet<Point> = steps
+            .last()
+            .unwrap()
+            .iter()
+            .flat_map(|s| s.neighbors_to_go_to(&map))
+            .filter(|s| !visited.contains(s))
+            .collect();
+
+        if next_steps
+            .iter()
+            .any(|&s| s.on_map(&map) == Some(MapItem::End))
+        {
+            println!("{}", step_number);
+            break;
+        }
+
+        visited.extend(&next_steps);
+        steps.push(next_steps);
+    }
 }
 
 fn parse_input(input: &str) -> (DMatrix<MapItem>, usize, usize) {
