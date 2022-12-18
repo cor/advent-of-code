@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use aoc_2022_common::challenge_input;
 use nom::{
     branch::alt,
-    character::complete::i64,
+    character::complete::u64,
     character::{complete::line_ending, streaming::char},
     combinator::map,
     multi::{count, separated_list0},
@@ -14,13 +14,13 @@ use nom::{
 #[derive(Debug, Eq, PartialEq)]
 enum Packet {
     List(Vec<Packet>),
-    Integer(i64),
+    Integer(u64),
 }
 
 impl Packet {
     pub fn parse(input: &str) -> IResult<&str, Packet> {
         alt((
-            map(i64, Self::Integer),
+            map(u64, Self::Integer),
             delimited(
                 char('['),
                 map(separated_list0(char(','), Self::parse), Self::List),
@@ -43,17 +43,17 @@ impl Ord for Packet {
         match (self, other) {
             (Packet::Integer(lhs), Packet::Integer(rhs)) => lhs.cmp(rhs),
             (Packet::List(lhs), Packet::List(rhs)) => {
-                for (l, r) in lhs.iter().zip(rhs.iter()) {
-                    match l.cmp(r) {
-                        Ordering::Equal => {}
-                        res => return res,
+                for i in 0..(usize::max(lhs.len(), rhs.len())) {
+                    match (lhs.get(i), rhs.get(i)) {
+                        (Some(left), Some(right)) => match left.cmp(right) {
+                            Ordering::Equal => continue,
+                            ord => return ord,
+                        },
+                        (None, _) => return Ordering::Less,
+                        (_, None) => return Ordering::Greater,
                     }
                 }
-                if rhs.len() < lhs.len() {
-                    Ordering::Greater
-                } else {
-                    Ordering::Equal
-                }
+                Ordering::Equal
             }
             (lhs, Packet::Integer(rhs)) => lhs.cmp(&Packet::List(vec![Packet::Integer(*rhs)])),
             (Packet::Integer(lhs), rhs) => Packet::List(vec![Packet::Integer(*lhs)]).cmp(rhs),
@@ -70,7 +70,6 @@ impl PartialOrd<Self> for Packet {
 fn main() {
     let input = challenge_input();
     let (_, packets) = Packet::parse_pair_list0(&input).expect("invalid packets in input");
-    // dbg!(&packets);
     let res = &packets
         .iter()
         .map(|(lhs, rhs)| lhs.cmp(rhs))
