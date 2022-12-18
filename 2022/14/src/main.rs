@@ -64,27 +64,41 @@ enum ElementType {
     Sand,
 }
 
+#[derive(Clone, Debug)]
 struct World {
     elements: HashSet<Element>,
     start: Point,
 }
 
 impl World {
-    pub fn new(rock_corner_sequences: &Vec<Vec<Point>>) {
-        let mut elements: HashSet<Element> = HashSet::new();
-        for rock_corner_seq in rock_corner_sequences {
-            let new_rocks = rock_corner_seq
-                .iter()
-                .fold(
-                    (HashSet::<Point>::new(), rock_corner_seq[0]),
-                    |(mut all_rocks, last_corner), next_corner| {
-                        all_rocks.extend(&last_corner.points_between(next_corner));
-                        (all_rocks, *next_corner)
-                    },
-                )
-                .0;
+    pub fn new(rock_corner_sequences: &[Vec<Point>]) -> Self {
+        let elements: HashSet<Element> = rock_corner_sequences
+            .iter()
+            .fold(HashSet::<Point>::new(), |mut rocks, seq| {
+                let new_rocks = seq
+                    .iter()
+                    .fold(
+                        (HashSet::<Point>::new(), seq[0]),
+                        |(mut all_rocks, last_corner), next_corner| {
+                            all_rocks.extend(&last_corner.points_between(next_corner));
+                            (all_rocks, *next_corner)
+                        },
+                    )
+                    .0;
+                rocks.extend(new_rocks);
 
-            dbg!(new_rocks);
+                rocks
+            })
+            .iter()
+            .map(|&point| Element {
+                point,
+                ty: ElementType::Stone,
+            })
+            .collect();
+
+        Self {
+            elements,
+            start: Point::new(500, 0),
         }
     }
 }
@@ -95,6 +109,7 @@ fn main() {
     dbg!(&point_sequences);
 
     println!("{}", input);
-    World::new(&point_sequences);
+    let world = World::new(&point_sequences);
+    dbg!(world);
     // dbg!(Point::new(2, 4).points_between(&Point::new(2, 8)));
 }
