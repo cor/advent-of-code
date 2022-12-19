@@ -116,6 +116,7 @@ name = "aoc-2022-14"
 version = "0.1.0"
 dependencies = [
  "aoc-2022-common",
+ "derive_more",
  "nom",
 ]
 

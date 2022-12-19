@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use aoc_2022_common::challenge_input;
 
+use derive_more::Add;
 use nom::{
     bytes::complete::tag,
     character::{
@@ -20,7 +21,7 @@ struct Element {
     pub ty: ElementType, // type is a keyword
 }
 
-#[derive(Clone, Copy, Eq, PartialEq, Hash, Debug)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Debug, Add)]
 struct Point {
     pub x: i32,
     pub y: i32,
@@ -103,6 +104,36 @@ impl World {
         }
     }
 
+    pub fn add_sand(&mut self) -> Option<Point> {
+        let mut current_point = self.start;
+
+        loop {
+            if self.void_below(&current_point) {
+                return None;
+            }
+
+            let below = current_point + Point::new(0, 1);
+            if self.get(&below).is_none() {
+                current_point = below;
+            } else {
+                let bottom_left = current_point + Point::new(-1, 1);
+                let bottom_right = current_point + Point::new(1, 1);
+                if self.get(&bottom_left).is_none() {
+                    current_point = bottom_left;
+                } else if self.get(&bottom_right).is_none() {
+                    current_point = bottom_right;
+                } else {
+                    // we have reached a stable point
+                    self.elements.insert(Element {
+                        point: current_point,
+                        ty: ElementType::Sand,
+                    });
+                    return Some(current_point);
+                }
+            }
+        }
+    }
+
     pub fn get(&self, point: &Point) -> Option<ElementType> {
         use ElementType::{Sand, Stone};
         if self.elements.contains(&Element {
@@ -126,17 +157,26 @@ impl World {
             .iter()
             .any(|el| el.point.x == *x && el.point.y > *y)
     }
+
+    pub fn sand_count(&self) -> usize {
+        self.elements
+            .iter()
+            .filter(|el| el.ty == ElementType::Sand)
+            .count()
+    }
 }
 
 fn main() {
     let input = challenge_input();
     let (_, point_sequences) = Point::parse_sequence_list(&input).expect("invalid points in input");
-    // dbg!(&point_sequences);
 
-    // println!("{}", input);
-    let world = World::new(&point_sequences);
-    dbg!(world.get(&Point::new(2, -4)));
-    dbg!(world.void_below(&Point::new(2, -4)));
-    dbg!(world.get(&Point::new(466, 138)));
-    dbg!(world.void_below(&Point::new(466, -1900000)));
+    let mut world = World::new(&point_sequences);
+
+    loop {
+        let added_sand = world.add_sand();
+        if added_sand.is_none() {
+            break;
+        }
+    }
+    println!("{}", world.sand_count());
 }
