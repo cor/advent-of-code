@@ -31,7 +31,7 @@ impl Point {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
     }
-    pub fn points_between(&self, other: &Self) -> HashSet<Self> {
+    pub fn points_between(self, other: Self) -> HashSet<Self> {
         if self.x == other.x {
             if self.y < other.y {
                 (self.y..=other.y).map(|y| Self::new(self.x, y)).collect()
@@ -70,10 +70,11 @@ enum ElementType {
 struct World {
     elements: HashSet<Element>,
     start: Point,
+    floor_height: Option<i32>,
 }
 
 impl World {
-    pub fn new(rock_corner_sequences: &[Vec<Point>]) -> Self {
+    pub fn new(rock_corner_sequences: &[Vec<Point>], with_floor: bool) -> Self {
         let elements: HashSet<Element> = rock_corner_sequences
             .iter()
             .fold(HashSet::<Point>::new(), |mut rocks, seq| {
@@ -82,13 +83,12 @@ impl World {
                     .fold(
                         (HashSet::<Point>::new(), seq[0]),
                         |(mut all_rocks, last_corner), next_corner| {
-                            all_rocks.extend(&last_corner.points_between(next_corner));
+                            all_rocks.extend(last_corner.points_between(*next_corner));
                             (all_rocks, *next_corner)
                         },
                     )
                     .0;
                 rocks.extend(new_rocks);
-
                 rocks
             })
             .iter()
@@ -98,9 +98,16 @@ impl World {
             })
             .collect();
 
+        let floor_height = if with_floor {
+            Some(elements.iter().map(|el| el.point.y).max().unwrap() + 2)
+        } else {
+            None
+        };
+
         Self {
             elements,
             start: Point::new(500, 0),
+            floor_height,
         }
     }
 
@@ -108,19 +115,19 @@ impl World {
         let mut current_point = self.start;
 
         loop {
-            if self.void_below(&current_point) {
+            if self.void_below(current_point) {
                 return None;
             }
 
             let below = current_point + Point::new(0, 1);
-            if self.get(&below).is_none() {
+            if self.get(below).is_none() {
                 current_point = below;
             } else {
                 let bottom_left = current_point + Point::new(-1, 1);
                 let bottom_right = current_point + Point::new(1, 1);
-                if self.get(&bottom_left).is_none() {
+                if self.get(bottom_left).is_none() {
                     current_point = bottom_left;
-                } else if self.get(&bottom_right).is_none() {
+                } else if self.get(bottom_right).is_none() {
                     current_point = bottom_right;
                 } else {
                     // we have reached a stable point
@@ -134,28 +141,25 @@ impl World {
         }
     }
 
-    pub fn get(&self, point: &Point) -> Option<ElementType> {
+    pub fn get(&self, point: Point) -> Option<ElementType> {
         use ElementType::{Sand, Stone};
-        if self.elements.contains(&Element {
-            point: *point,
-            ty: Stone,
-        }) {
+        if self.elements.contains(&Element { point, ty: Stone }) {
             Some(Stone)
-        } else if self.elements.contains(&Element {
-            point: *point,
-            ty: Sand,
-        }) {
+        } else if self.elements.contains(&Element { point, ty: Sand }) {
             Some(Sand)
+        } else if self.floor_height == Some(point.y) {
+            Some(Stone)
         } else {
             None
         }
     }
 
-    pub fn void_below(&self, Point { x, y }: &Point) -> bool {
-        !self
-            .elements
-            .iter()
-            .any(|el| el.point.x == *x && el.point.y > *y)
+    pub fn void_below(&self, Point { x, y }: Point) -> bool {
+        self.floor_height.is_none()
+            && !self
+                .elements
+                .iter()
+                .any(|el| el.point.x == x && el.point.y > y)
     }
 
     pub fn sand_count(&self) -> usize {
@@ -166,17 +170,34 @@ impl World {
     }
 }
 
-fn main() {
-    let input = challenge_input();
-    let (_, point_sequences) = Point::parse_sequence_list(&input).expect("invalid points in input");
-
-    let mut world = World::new(&point_sequences);
-
+#[must_use]
+fn part_1(point_sequences: &[Vec<Point>]) -> usize {
+    let mut world = World::new(point_sequences, false);
     loop {
         let added_sand = world.add_sand();
         if added_sand.is_none() {
             break;
         }
     }
-    println!("{}", world.sand_count());
+    world.sand_count()
+}
+
+#[must_use]
+fn part_2(point_sequences: &[Vec<Point>]) -> usize {
+    let mut world_with_floor = World::new(point_sequences, true);
+    loop {
+        let added_sand = world_with_floor.add_sand();
+        if added_sand == Some(world_with_floor.start) {
+            break;
+        }
+    }
+    world_with_floor.sand_count()
+}
+
+fn main() {
+    let input = challenge_input();
+    let (_, point_sequences) = Point::parse_sequence_list(&input).expect("invalid points in input");
+
+    println!("{}", part_1(&point_sequences));
+    println!("{}", part_2(&point_sequences));
 }
