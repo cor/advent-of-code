@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use aoc_2022_common::challenge_input;
 
-use derive_more::Add;
+use derive_more::{Add, Constructor};
 use nom::{
     bytes::complete::tag,
     character::{
@@ -15,22 +15,19 @@ use nom::{
     IResult,
 };
 
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Constructor)]
 struct Element {
     pub point: Point,
     pub ty: ElementType, // type is a keyword
 }
 
-#[derive(Clone, Copy, Eq, PartialEq, Hash, Debug, Add)]
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Debug, Add, Constructor)]
 struct Point {
     pub x: i32,
     pub y: i32,
 }
 
 impl Point {
-    pub fn new(x: i32, y: i32) -> Self {
-        Self { x, y }
-    }
     pub fn points_between(self, other: Self) -> HashSet<Self> {
         if self.x == other.x {
             if self.y < other.y {
@@ -66,6 +63,8 @@ enum ElementType {
     Sand,
 }
 
+use ElementType::{Rock, Sand};
+
 #[derive(Clone, Debug)]
 struct World {
     elements: HashSet<Element>,
@@ -92,10 +91,7 @@ impl World {
                 all_rocks
             })
             .iter()
-            .map(|&point| Element {
-                point,
-                ty: ElementType::Rock,
-            })
+            .map(|&point| Element::new(point, Rock))
             .collect();
 
         let floor_height = if with_floor {
@@ -131,10 +127,7 @@ impl World {
                     current_point = bottom_right;
                 } else {
                     // We have reached a stable point, drop the sand here
-                    self.elements.insert(Element {
-                        point: current_point,
-                        ty: ElementType::Sand,
-                    });
+                    self.elements.insert(Element::new(current_point, Sand));
                     return Some(current_point);
                 }
             }
@@ -142,10 +135,9 @@ impl World {
     }
 
     pub fn get(&self, point: Point) -> Option<ElementType> {
-        use ElementType::{Rock, Sand};
-        if self.elements.contains(&Element { point, ty: Rock }) {
+        if self.elements.contains(&Element::new(point, Rock)) {
             Some(Rock)
-        } else if self.elements.contains(&Element { point, ty: Sand }) {
+        } else if self.elements.contains(&Element::new(point, Sand)) {
             Some(Sand)
         } else if self.floor_height == Some(point.y) {
             Some(Rock)
@@ -163,10 +155,7 @@ impl World {
     }
 
     pub fn sand_count(&self) -> usize {
-        self.elements
-            .iter()
-            .filter(|el| el.ty == ElementType::Sand)
-            .count()
+        self.elements.iter().filter(|el| el.ty == Sand).count()
     }
 }
 
