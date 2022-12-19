@@ -121,6 +121,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aoc-2022-15"
+version = "0.1.0"
+dependencies = [
+ "aoc-2022-common",
+ "derive_more",
+ "nom",
+]
+
+[[package]]
 name = "aoc-2022-common"
 version = "0.1.0"
 

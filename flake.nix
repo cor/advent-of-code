@@ -23,7 +23,7 @@
             lib = self.inputs.crane.lib.${system};
             stable = lib.overrideToolchain self'.packages.rust-stable;
           };
-          days = map (pkgs.lib.fixedWidthNumber 2) (pkgs.lib.range 1 14);
+          days = map (pkgs.lib.fixedWidthNumber 2) (pkgs.lib.range 1 15);
         in {
           packages = {
             rust-stable = inputs'.rust-overlay.packages.rust.override {
