@@ -62,7 +62,7 @@ impl Point {
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 enum ElementType {
-    Stone,
+    Rock,
     Sand,
 }
 
@@ -77,24 +77,24 @@ impl World {
     pub fn new(rock_corner_sequences: &[Vec<Point>], with_floor: bool) -> Self {
         let elements: HashSet<Element> = rock_corner_sequences
             .iter()
-            .fold(HashSet::<Point>::new(), |mut rocks, seq| {
+            .fold(HashSet::<Point>::new(), |mut all_rocks, seq| {
                 let new_rocks = seq
                     .iter()
                     .fold(
                         (HashSet::<Point>::new(), seq[0]),
-                        |(mut all_rocks, last_corner), next_corner| {
-                            all_rocks.extend(last_corner.points_between(*next_corner));
-                            (all_rocks, *next_corner)
+                        |(mut rocks, last_corner), next_corner| {
+                            rocks.extend(last_corner.points_between(*next_corner));
+                            (rocks, *next_corner)
                         },
                     )
                     .0;
-                rocks.extend(new_rocks);
-                rocks
+                all_rocks.extend(new_rocks);
+                all_rocks
             })
             .iter()
             .map(|&point| Element {
                 point,
-                ty: ElementType::Stone,
+                ty: ElementType::Rock,
             })
             .collect();
 
@@ -130,7 +130,7 @@ impl World {
                 } else if self.get(bottom_right).is_none() {
                     current_point = bottom_right;
                 } else {
-                    // we have reached a stable point
+                    // We have reached a stable point, drop the sand here
                     self.elements.insert(Element {
                         point: current_point,
                         ty: ElementType::Sand,
@@ -142,13 +142,13 @@ impl World {
     }
 
     pub fn get(&self, point: Point) -> Option<ElementType> {
-        use ElementType::{Sand, Stone};
-        if self.elements.contains(&Element { point, ty: Stone }) {
-            Some(Stone)
+        use ElementType::{Rock, Sand};
+        if self.elements.contains(&Element { point, ty: Rock }) {
+            Some(Rock)
         } else if self.elements.contains(&Element { point, ty: Sand }) {
             Some(Sand)
         } else if self.floor_height == Some(point.y) {
-            Some(Stone)
+            Some(Rock)
         } else {
             None
         }
@@ -171,8 +171,8 @@ impl World {
 }
 
 #[must_use]
-fn part_1(point_sequences: &[Vec<Point>]) -> usize {
-    let mut world = World::new(point_sequences, false);
+fn part_1(rock_corner_sequences: &[Vec<Point>]) -> usize {
+    let mut world = World::new(rock_corner_sequences, false);
     loop {
         let added_sand = world.add_sand();
         if added_sand.is_none() {
@@ -183,21 +183,22 @@ fn part_1(point_sequences: &[Vec<Point>]) -> usize {
 }
 
 #[must_use]
-fn part_2(point_sequences: &[Vec<Point>]) -> usize {
-    let mut world_with_floor = World::new(point_sequences, true);
+fn part_2(rock_corner_sequences: &[Vec<Point>]) -> usize {
+    let mut world = World::new(rock_corner_sequences, true);
     loop {
-        let added_sand = world_with_floor.add_sand();
-        if added_sand == Some(world_with_floor.start) {
+        let added_sand = world.add_sand();
+        if added_sand == Some(world.start) {
             break;
         }
     }
-    world_with_floor.sand_count()
+    world.sand_count()
 }
 
 fn main() {
     let input = challenge_input();
-    let (_, point_sequences) = Point::parse_sequence_list(&input).expect("invalid points in input");
+    let (_, rock_corner_sequences) =
+        Point::parse_sequence_list(&input).expect("Invalid rock corners in input");
 
-    println!("{}", part_1(&point_sequences));
-    println!("{}", part_2(&point_sequences));
+    println!("{}", part_1(&rock_corner_sequences));
+    println!("{}", part_2(&rock_corner_sequences));
 }
