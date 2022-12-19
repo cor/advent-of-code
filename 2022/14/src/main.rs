@@ -3,13 +3,14 @@ use std::collections::HashSet;
 use aoc_2022_common::challenge_input;
 
 use nom::{
-    branch::alt,
     bytes::complete::tag,
-    character::complete::i32,
-    character::{complete::line_ending, streaming::char},
+    character::{
+        complete::{i32, line_ending},
+        streaming::char,
+    },
     combinator::map,
-    multi::{count, many0, separated_list0},
-    sequence::{delimited, preceded, separated_pair},
+    multi::separated_list0,
+    sequence::separated_pair,
     IResult,
 };
 
@@ -101,15 +102,41 @@ impl World {
             start: Point::new(500, 0),
         }
     }
+
+    pub fn get(&self, point: &Point) -> Option<ElementType> {
+        use ElementType::{Sand, Stone};
+        if self.elements.contains(&Element {
+            point: *point,
+            ty: Stone,
+        }) {
+            Some(Stone)
+        } else if self.elements.contains(&Element {
+            point: *point,
+            ty: Sand,
+        }) {
+            Some(Sand)
+        } else {
+            None
+        }
+    }
+
+    pub fn void_below(&self, Point { x, y }: &Point) -> bool {
+        !self
+            .elements
+            .iter()
+            .any(|el| el.point.x == *x && el.point.y > *y)
+    }
 }
 
 fn main() {
     let input = challenge_input();
     let (_, point_sequences) = Point::parse_sequence_list(&input).expect("invalid points in input");
-    dbg!(&point_sequences);
+    // dbg!(&point_sequences);
 
-    println!("{}", input);
+    // println!("{}", input);
     let world = World::new(&point_sequences);
-    dbg!(world);
-    // dbg!(Point::new(2, 4).points_between(&Point::new(2, 8)));
+    dbg!(world.get(&Point::new(2, -4)));
+    dbg!(world.void_below(&Point::new(2, -4)));
+    dbg!(world.get(&Point::new(466, 138)));
+    dbg!(world.void_below(&Point::new(466, -1900000)));
 }
