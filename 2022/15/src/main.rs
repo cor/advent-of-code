@@ -23,7 +23,7 @@ struct Point {
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Debug, Add, Constructor)]
 struct Sensor {
     pub position: Point,
-    pub closest_beacon: Point,
+    pub beacon: Point,
 }
 
 const DIRECTIONS: [Point; 4] = [
@@ -48,36 +48,20 @@ impl Sensor {
         separated_list0(line_ending, Self::parse)(input)
     }
 
-    pub fn beaconless_points(&self) -> HashSet<Point> {
-        //   2
-        //  212
-        // 21012
-        //  212
-        //   2
-        let mut points: Vec<HashSet<Point>> = Vec::new();
-        let mut all_points: HashSet<Point> = HashSet::new();
-        all_points.insert(self.position);
-        points.push(all_points.clone());
+    pub fn radius(&self) -> i32 {
+        self.position.manhattan(self.beacon)
+    }
 
-        loop {
-            let new_neighbors = points
-                .last()
-                .unwrap()
-                .iter()
-                .flat_map(Point::neighbors)
-                .filter(|p| !all_points.contains(&p))
-                .collect::<HashSet<Point>>();
-            all_points.extend(&new_neighbors);
-
-            if new_neighbors.contains(&self.closest_beacon) {
-                break;
-            } else {
-                points.push(new_neighbors);
-            }
+    pub fn intersection(&self, y: i32) -> Option<(i32, i32)> {
+        let r = self.radius();
+        let (px, py) = (self.position.x, self.position.y);
+        if y > py + r || y < py - r {
+            None
+        } else {
+            let dy = (y - py).abs();
+            let dx = r - dy;
+            Some((px - dx, px + dx))
         }
-
-        all_points.remove(&self.closest_beacon);
-        all_points
     }
 }
 
@@ -93,20 +77,23 @@ impl Point {
         )(input)
     }
 
-    pub fn neighbors(&self) -> HashSet<Self> {
-        DIRECTIONS.iter().map(|&dir| *self + dir).collect()
+    pub fn neighbors(self) -> HashSet<Self> {
+        DIRECTIONS.iter().map(|&dir| self + dir).collect()
+    }
+
+    pub fn manhattan(self, other: Point) -> i32 {
+        (self.x - other.x).abs() + (self.y - other.y).abs()
     }
 }
 
 fn main() {
     let input = challenge_input();
     let (_, sensors) = Sensor::parse_list0(&input).expect("Invalid sensors in input");
-    let beaconless_points = sensors
-        .iter()
-        .flat_map(Sensor::beaconless_points)
-        .collect::<HashSet<_>>();
+    dbg!(&sensors[0]);
+    dbg!(&sensors[0].radius());
 
-    let y10 = beaconless_points.iter().filter(|p| p.y == 10).count();
-    println!("{}", y10);
+    let s = Sensor::new(Point::new(4, 0), Point::new(4, 4));
+    dbg!(s.intersection(-4));
+    // dbg!(Point::new(0, 2).manhattan(Point::new(-4, 9)));
     // dbg!(beaconless_points);
 }
