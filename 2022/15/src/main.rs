@@ -34,7 +34,7 @@ impl Range {
         self.0 <= x && x <= self.1
     }
 
-    fn length(&self) -> i32 {
+    fn length(self) -> i32 {
         self.1 - self.0 + 1
     }
 
@@ -56,7 +56,7 @@ trait Ranges {
 
 impl Ranges for Vec<Range> {
     fn length(&self) -> i32 {
-        self.iter().map(Range::length).sum()
+        self.iter().copied().map(Range::length).sum()
     }
 
     fn contains(&self, x: i32) -> bool {
@@ -81,13 +81,6 @@ impl Ranges for Vec<Range> {
         }
     }
 }
-
-const DIRECTIONS: [Point; 4] = [
-    Point { x: 0, y: 1 },
-    Point { x: 0, y: -1 },
-    Point { x: 1, y: 0 },
-    Point { x: -1, y: 0 },
-];
 
 impl Sensor {
     pub fn parse(input: &str) -> IResult<&str, Self> {
@@ -132,27 +125,19 @@ impl Point {
         )(input)
     }
 
-    pub fn neighbors(self) -> HashSet<Self> {
-        DIRECTIONS.iter().map(|&dir| self + dir).collect()
-    }
-
     pub fn manhattan(self, other: Point) -> i32 {
         (self.x - other.x).abs() + (self.y - other.y).abs()
     }
 }
 
-fn main() {
-    let input = challenge_input();
-    let y = 2000000;
-    let (_, sensors) = Sensor::parse_list0(&input).expect("Invalid sensors in input");
+#[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
+fn part_1(sensors: &[Sensor], y: i32) -> i32 {
     let mut intersections = sensors
         .iter()
         .filter_map(|s| s.intersection(y))
         .collect::<Vec<_>>();
-
-    dbg!(&intersections);
     intersections.remove_overlaps();
-    dbg!(&intersections);
+
     let beacons_on_y = sensors
         .iter()
         .map(|s| s.beacon)
@@ -161,10 +146,12 @@ fn main() {
         .filter(|b| b.y == y && intersections.contains(b.x))
         .count() as i32;
 
-    let total_length = &intersections.length();
+    intersections.length() - beacons_on_y
+}
 
-    dbg!(sensors);
-    dbg!(total_length);
-    dbg!(beacons_on_y);
-    dbg!(total_length - beacons_on_y);
+fn main() {
+    let input = challenge_input();
+    let (_, sensors) = Sensor::parse_list0(&input).expect("Invalid sensors in input");
+
+    println!("{}", part_1(&sensors, 2_000_000));
 }
