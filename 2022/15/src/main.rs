@@ -7,7 +7,7 @@ use derive_more::{Add, Constructor};
 use nom::sequence::preceded;
 use nom::{
     bytes::complete::tag,
-    character::complete::{i32, line_ending},
+    character::complete::{i64, line_ending},
     combinator::map,
     multi::separated_list0,
     sequence::separated_pair,
@@ -16,8 +16,8 @@ use nom::{
 
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Debug, Add, Constructor)]
 struct Point {
-    pub x: i32,
-    pub y: i32,
+    pub x: i64,
+    pub y: i64,
 }
 
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Debug, Add, Constructor)]
@@ -28,13 +28,13 @@ struct Sensor {
 
 /// Inclusive upper bound
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Debug)]
-struct Range(i32, i32);
+struct Range(i64, i64);
 impl Range {
-    fn contains(self, x: i32) -> bool {
+    fn contains(&self, x: i64) -> bool {
         self.0 <= x && x <= self.1
     }
 
-    fn length(self) -> i32 {
+    fn length(&self) -> i64 {
         self.1 - self.0 + 1
     }
 
@@ -49,21 +49,22 @@ impl Range {
 }
 
 trait Ranges {
-    fn length(&self) -> i32;
-    fn contains(&self, x: i32) -> bool;
-    fn remove_overlaps(&mut self);
+    fn length(&self) -> i64;
+    fn contains(&self, x: i64) -> bool;
+    fn remove_overlaps_and_sort(&mut self);
+    fn find_gap(&self, within: Range) -> Option<i64>;
 }
 
 impl Ranges for Vec<Range> {
-    fn length(&self) -> i32 {
-        self.iter().copied().map(Range::length).sum()
+    fn length(&self) -> i64 {
+        self.iter().map(Range::length).sum()
     }
 
-    fn contains(&self, x: i32) -> bool {
+    fn contains(&self, x: i64) -> bool {
         self.iter().any(|r| r.contains(x))
     }
 
-    fn remove_overlaps(&mut self) {
+    fn remove_overlaps_and_sort(&mut self) {
         'root: loop {
             for i in 0..self.len() {
                 for j in 0..self.len() {
@@ -79,6 +80,19 @@ impl Ranges for Vec<Range> {
             }
             break;
         }
+        self.sort_by(|r0, r1| r0.0.cmp(&r1.0));
+    }
+
+    /// Assumes [`remove_overlaps_and_sort()`] is called on self before.
+    fn find_gap(&self, within: Range) -> Option<i64> {
+        for i in 0..(self.len() - 1) {
+            let possible_gap = self[i].1 + 1;
+
+            if within.contains(possible_gap) && possible_gap < self[i + 1].0 {
+                return Some(possible_gap);
+            }
+        }
+        None
     }
 }
 
@@ -97,11 +111,11 @@ impl Sensor {
         separated_list0(line_ending, Self::parse)(input)
     }
 
-    pub fn radius(&self) -> i32 {
+    pub fn radius(&self) -> i64 {
         self.position.manhattan(self.beacon)
     }
 
-    pub fn intersection(&self, y: i32) -> Option<Range> {
+    pub fn intersection(&self, y: i64) -> Option<Range> {
         let r = self.radius();
         let (px, py) = (self.position.x, self.position.y);
 
@@ -113,40 +127,61 @@ impl Sensor {
     }
 }
 
+trait Sensors {
+    fn intersections(&self, y: i64) -> Vec<Range>;
+}
+
+impl Sensors for Vec<Sensor> {
+    fn intersections(&self, y: i64) -> Vec<Range> {
+        let mut intersections = self
+            .iter()
+            .filter_map(|s| s.intersection(y))
+            .collect::<Vec<_>>();
+        intersections.remove_overlaps_and_sort();
+        intersections
+    }
+}
+
 impl Point {
     pub fn parse(input: &str) -> IResult<&str, Self> {
         map(
             separated_pair(
-                preceded(tag("x="), i32),
+                preceded(tag("x="), i64),
                 tag(", "),
-                preceded(tag("y="), i32),
+                preceded(tag("y="), i64),
             ),
             |(x, y)| Self::new(x, y),
         )(input)
     }
 
-    pub fn manhattan(self, other: Point) -> i32 {
+    pub fn manhattan(self, other: Point) -> i64 {
         (self.x - other.x).abs() + (self.y - other.y).abs()
     }
 }
 
 #[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
-fn part_1(sensors: &[Sensor], y: i32) -> i32 {
-    let mut intersections = sensors
-        .iter()
-        .filter_map(|s| s.intersection(y))
-        .collect::<Vec<_>>();
-    intersections.remove_overlaps();
-
+fn part_1(sensors: &Vec<Sensor>, y: i64) -> i64 {
     let beacons_on_y = sensors
         .iter()
         .map(|s| s.beacon)
+        .filter(|b| b.y == y)
         .collect::<HashSet<_>>()
-        .iter()
-        .filter(|b| b.y == y && intersections.contains(b.x))
-        .count() as i32;
+        .len() as i64;
 
-    intersections.length() - beacons_on_y
+    sensors.intersections(y).length() - beacons_on_y
+}
+
+fn part_2(sensors: &Vec<Sensor>, limit: i64) -> Option<i64> {
+    let target_range = Range(0, limit);
+
+    for y in 0..limit {
+        let intersections = sensors.intersections(y);
+        if let Some(x) = intersections.find_gap(target_range) {
+            return Some(x * 4_000_000 + y);
+        }
+    }
+
+    None
 }
 
 fn main() {
@@ -154,4 +189,8 @@ fn main() {
     let (_, sensors) = Sensor::parse_list0(&input).expect("Invalid sensors in input");
 
     println!("{}", part_1(&sensors, 2_000_000));
+    println!(
+        "{}",
+        part_2(&sensors, 4_000_000).expect("no part 2 solution")
+    );
 }
