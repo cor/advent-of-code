@@ -29,36 +29,9 @@ struct Sensor {
 /// Inclusive upper bound
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Debug)]
 struct Range(i32, i32);
-
 impl Range {
-    fn remove_overlaps(ranges: &mut Vec<Self>) {
-        'root: loop {
-            for i in 0..ranges.len() {
-                for j in 0..ranges.len() {
-                    if i == j {
-                        continue; // don't merge a range with itself
-                    }
-                    if let Some(r) = ranges[i].combined(ranges[j]) {
-                        ranges[i] = r;
-                        ranges.remove(j);
-                        continue 'root;
-                    }
-                }
-            }
-            break;
-        }
-    }
-
-    fn total_length(ranges: &[Self]) -> i32 {
-        ranges.iter().map(Self::length).sum()
-    }
-
     fn contains(self, x: i32) -> bool {
-        self.0 >= x && x <= self.1
-    }
-
-    fn list_contains(ranges: &[Self], x: i32) -> bool {
-        ranges.iter().any(|r| r.contains(x))
+        self.0 <= x && x <= self.1
     }
 
     fn length(&self) -> i32 {
@@ -72,6 +45,40 @@ impl Range {
     pub fn combined(self, other: Self) -> Option<Self> {
         self.overlaps(other)
             .then(|| Range(self.0.min(other.0), self.1.max(other.1)))
+    }
+}
+
+trait Ranges {
+    fn length(&self) -> i32;
+    fn contains(&self, x: i32) -> bool;
+    fn remove_overlaps(&mut self);
+}
+
+impl Ranges for Vec<Range> {
+    fn length(&self) -> i32 {
+        self.iter().map(Range::length).sum()
+    }
+
+    fn contains(&self, x: i32) -> bool {
+        self.iter().any(|r| r.contains(x))
+    }
+
+    fn remove_overlaps(&mut self) {
+        'root: loop {
+            for i in 0..self.len() {
+                for j in 0..self.len() {
+                    if i == j {
+                        continue; // don't merge a range with itself
+                    }
+                    if let Some(r) = self[i].combined(self[j]) {
+                        self[i] = r;
+                        self.remove(j);
+                        continue 'root;
+                    }
+                }
+            }
+            break;
+        }
     }
 }
 
@@ -104,13 +111,12 @@ impl Sensor {
     pub fn intersection(&self, y: i32) -> Option<Range> {
         let r = self.radius();
         let (px, py) = (self.position.x, self.position.y);
-        if y > py + r || y < py - r {
-            None
-        } else {
+
+        (!(y > py + r || y < py - r)).then(|| {
             let dy = (y - py).abs();
             let dx = r - dy;
-            Some(Range(px - dx, px + dx))
-        }
+            Range(px - dx, px + dx)
+        })
     }
 }
 
@@ -145,19 +151,20 @@ fn main() {
         .collect::<Vec<_>>();
 
     dbg!(&intersections);
-    Range::remove_overlaps(&mut intersections);
+    intersections.remove_overlaps();
     dbg!(&intersections);
     let beacons_on_y = sensors
         .iter()
         .map(|s| s.beacon)
-        .filter(|b| b.y == y && Range::list_contains(&intersections, b.x))
+        .collect::<HashSet<_>>()
+        .iter()
+        .filter(|b| b.y == y && intersections.contains(b.x))
         .count() as i32;
-    let total_length = Range::total_length(&intersections);
 
+    let total_length = &intersections.length();
+
+    dbg!(sensors);
     dbg!(total_length);
     dbg!(beacons_on_y);
-    dbg!(Range::total_length(&intersections) - beacons_on_y);
-
-    // dbg!(Point::new(0, 2).manhattan(Point::new(-4, 9)));
-    // dbg!(beaconless_points);
+    dbg!(total_length - beacons_on_y);
 }
