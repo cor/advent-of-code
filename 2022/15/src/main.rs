@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use aoc_2022_common::challenge_input;
 
 use derive_more::{Add, Constructor};
+use rayon::prelude::*;
 
 use nom::sequence::preceded;
 use nom::{
@@ -174,14 +175,12 @@ fn part_1(sensors: &Vec<Sensor>, y: i64) -> i64 {
 fn part_2(sensors: &Vec<Sensor>, limit: i64) -> Option<i64> {
     let target_range = Range(0, limit);
 
-    for y in 0..limit {
-        let intersections = sensors.intersections(y);
-        if let Some(x) = intersections.find_gap(target_range) {
-            return Some(x * 4_000_000 + y);
-        }
-    }
-
-    None
+    (0..limit).into_par_iter().find_map_first(|y| {
+        sensors
+            .intersections(y)
+            .find_gap(target_range)
+            .map(|x| x * 4_000_000 + y)
+    })
 }
 
 fn main() {

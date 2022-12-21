@@ -9,3 +9,4 @@ edition = "2021"
 aoc-2022-common = { path = "../common/" }
 derive_more = "0.99.17"
 nom = "7.1.1"
+rayon = "1.6.1"
