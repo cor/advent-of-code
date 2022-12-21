@@ -26,6 +26,55 @@ struct Sensor {
     pub beacon: Point,
 }
 
+/// Inclusive upper bound
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Debug)]
+struct Range(i32, i32);
+
+impl Range {
+    fn remove_overlaps(ranges: &mut Vec<Self>) {
+        'root: loop {
+            for i in 0..ranges.len() {
+                for j in 0..ranges.len() {
+                    if i == j {
+                        continue; // don't merge a range with itself
+                    }
+                    if let Some(r) = ranges[i].combined(ranges[j]) {
+                        ranges[i] = r;
+                        ranges.remove(j);
+                        continue 'root;
+                    }
+                }
+            }
+            break;
+        }
+    }
+
+    fn total_length(ranges: &[Self]) -> i32 {
+        ranges.iter().map(Self::length).sum()
+    }
+
+    fn contains(self, x: i32) -> bool {
+        self.0 >= x && x <= self.1
+    }
+
+    fn list_contains(ranges: &[Self], x: i32) -> bool {
+        ranges.iter().any(|r| r.contains(x))
+    }
+
+    fn length(&self) -> i32 {
+        self.1 - self.0 + 1
+    }
+
+    fn overlaps(self, other: Range) -> bool {
+        (self.0 >= other.0 && self.0 <= other.1) || (self.1 >= other.0 && self.1 <= other.1)
+    }
+
+    pub fn combined(self, other: Self) -> Option<Self> {
+        self.overlaps(other)
+            .then(|| Range(self.0.min(other.0), self.1.max(other.1)))
+    }
+}
+
 const DIRECTIONS: [Point; 4] = [
     Point { x: 0, y: 1 },
     Point { x: 0, y: -1 },
@@ -52,7 +101,7 @@ impl Sensor {
         self.position.manhattan(self.beacon)
     }
 
-    pub fn intersection(&self, y: i32) -> Option<(i32, i32)> {
+    pub fn intersection(&self, y: i32) -> Option<Range> {
         let r = self.radius();
         let (px, py) = (self.position.x, self.position.y);
         if y > py + r || y < py - r {
@@ -60,7 +109,7 @@ impl Sensor {
         } else {
             let dy = (y - py).abs();
             let dx = r - dy;
-            Some((px - dx, px + dx))
+            Some(Range(px - dx, px + dx))
         }
     }
 }
@@ -88,12 +137,27 @@ impl Point {
 
 fn main() {
     let input = challenge_input();
+    let y = 2000000;
     let (_, sensors) = Sensor::parse_list0(&input).expect("Invalid sensors in input");
-    dbg!(&sensors[0]);
-    dbg!(&sensors[0].radius());
+    let mut intersections = sensors
+        .iter()
+        .filter_map(|s| s.intersection(y))
+        .collect::<Vec<_>>();
 
-    let s = Sensor::new(Point::new(4, 0), Point::new(4, 4));
-    dbg!(s.intersection(-4));
+    dbg!(&intersections);
+    Range::remove_overlaps(&mut intersections);
+    dbg!(&intersections);
+    let beacons_on_y = sensors
+        .iter()
+        .map(|s| s.beacon)
+        .filter(|b| b.y == y && Range::list_contains(&intersections, b.x))
+        .count() as i32;
+    let total_length = Range::total_length(&intersections);
+
+    dbg!(total_length);
+    dbg!(beacons_on_y);
+    dbg!(Range::total_length(&intersections) - beacons_on_y);
+
     // dbg!(Point::new(0, 2).manhattan(Point::new(-4, 9)));
     // dbg!(beaconless_points);
 }
