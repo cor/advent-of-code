@@ -16,7 +16,7 @@ fn main() {
 
     let mut x_history: Vec<i64> = vec![1, 1];
     for instr in instructions {
-        let last = *x_history.last().unwrap() as i64;
+        let last = *x_history.last().unwrap();
 
         x_history.push(last);
         if let Instruction::Addx(n) = instr {
@@ -37,7 +37,7 @@ pub fn part_1(x_history: &[i64]) {
 
     if sigs.len() >= 220 {
         let sum = sigs[20] + sigs[60] + sigs[100] + sigs[140] + sigs[180] + sigs[220];
-        println!("{}", sum);
+        println!("{sum}");
     } else {
         println!("Output is too short to produce signal sum");
     }

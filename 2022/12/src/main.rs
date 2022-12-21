@@ -19,7 +19,7 @@ fn main() {
     let start = Point::from_matrix_index(start_index, map.nrows());
 
     let part_1 = start.steps_to_end(&map).expect("no part 1 solution");
-    println!("{}", part_1);
+    println!("{part_1}");
 
     // Can be made faster by caching visited startpoints or by multithreading
     let part_2 = map
@@ -30,7 +30,7 @@ fn main() {
         .filter_map(|p| p.steps_to_end(&map))
         .min()
         .expect("no part 2 solution");
-    println!("{}", part_2);
+    println!("{part_2}");
 }
 
 fn parse_input(input: &str) -> DMatrix<MapItem> {
@@ -145,7 +145,7 @@ impl Display for MapItem {
         match self {
             MapItem::Start => write!(f, "S"),
             MapItem::End => write!(f, "E"),
-            MapItem::Level(n) => write!(f, "{}", n),
+            MapItem::Level(n) => write!(f, "{n}"),
         }
     }
 }
