@@ -6,6 +6,7 @@ struct Number {
     index: usize,
 }
 
+#[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
 fn mix(input_numbers: &[Number], mixing_numbers: &mut Vec<Number>) {
     let len_when_moving = (input_numbers.len() - 1) as i64;
 
@@ -32,9 +33,23 @@ fn grove_coordinates_sum(mixed_numbers: &[Number]) -> i64 {
         + mixed_numbers[(zero_index + 3000) % len].value
 }
 
+fn mix_n_times_with_key(input_numbers: &[Number], times: usize, decryption_key: i64) -> i64 {
+    let input = input_numbers
+        .iter()
+        .map(|n| Number {
+            index: n.index,
+            value: n.value * decryption_key,
+        })
+        .collect::<Vec<_>>();
+    let mut mixing_numbers = input.clone();
+
+    (0..times).for_each(|_| mix(&input, &mut mixing_numbers));
+
+    grove_coordinates_sum(&mixing_numbers)
+}
+
 fn main() {
-    let input = challenge_input();
-    let input_numbers: Vec<Number> = input
+    let input_numbers: Vec<Number> = challenge_input()
         .lines()
         .enumerate()
         .map(|(index, val)| Number {
@@ -43,25 +58,8 @@ fn main() {
         })
         .collect();
 
-    let mut mixing_numbers = input_numbers.clone();
-    mix(&input_numbers, &mut mixing_numbers);
-    let part_1 = grove_coordinates_sum(&mixing_numbers);
+    let part_1 = mix_n_times_with_key(&input_numbers, 1, 1);
     println!("{part_1}");
-
-    let decryption_key = 811589153;
-    let input_numbers_2 = input_numbers
-        .iter()
-        .map(|n| Number {
-            index: n.index,
-            value: n.value * decryption_key,
-        })
-        .collect::<Vec<_>>();
-
-    let mut mixing_numbers_2 = input_numbers_2.clone();
-
-    for _ in 0..10 {
-        mix(&input_numbers_2, &mut mixing_numbers_2);
-    }
-    let part_2 = grove_coordinates_sum(&mixing_numbers_2);
+    let part_2 = mix_n_times_with_key(&input_numbers, 10, 811_589_153);
     println!("{part_2}");
 }
