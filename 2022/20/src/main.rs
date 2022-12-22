@@ -8,16 +8,14 @@ struct Number {
 
 #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
 fn mix(input_numbers: &[Number], mixing_numbers: &mut Vec<Number>) {
-    let len_when_moving = (input_numbers.len() - 1) as i64;
-
     for num in input_numbers {
         let current_index = mixing_numbers
             .iter()
             .position(|n| n.index == num.index)
             .unwrap() as i64;
 
-        let new_index =
-            ((current_index + num.value) % len_when_moving + len_when_moving) % len_when_moving;
+        let len_while_moving = (input_numbers.len() - 1) as i64;
+        let new_index = (current_index + num.value).rem_euclid(len_while_moving);
 
         let removed = mixing_numbers.remove(current_index as usize);
         mixing_numbers.insert(new_index as usize, removed);
@@ -42,7 +40,6 @@ fn mix_n_times_with_key(input_numbers: &[Number], times: usize, decryption_key: 
         })
         .collect::<Vec<_>>();
     let mut mixing_numbers = input.clone();
-
     (0..times).for_each(|_| mix(&input, &mut mixing_numbers));
 
     grove_coordinates_sum(&mixing_numbers)
