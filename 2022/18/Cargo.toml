@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 aoc-2022-common = { path = "../common/" }
 derive_more = "0.99.17"
+rayon = "1.6.1"

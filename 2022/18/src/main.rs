@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::collections::HashSet;
 
 use aoc_2022_common::challenge_input;
@@ -45,6 +46,7 @@ impl Point {
         SIDES
             .iter()
             .filter(|&side| {
+                // BFS variant
                 let start = *self + *side;
                 if others.contains(&start) {
                     return false;
@@ -54,7 +56,9 @@ impl Point {
                 visited.insert(start);
                 steps.push(visited.clone());
 
-                for _ in 1..20 {
+                // instead of this 50, you could also calcualte the
+                // maximum distance
+                for _ in 1..50 {
                     let last = steps.last().unwrap();
                     if last.is_empty() {
                         return false;
@@ -79,10 +83,12 @@ impl Point {
 fn main() {
     let input = challenge_input();
     let points = Point::parse_list0(&input);
-    // let points = Point::parse_list0("1,1,1\n2,1,1");
-    let exposed_sides: usize = points.iter().map(|p| p.exposed_sides(&points)).sum();
-    let really_exposed_sides: usize = points.iter().map(|p| p.really_exposed_sides(&points)).sum();
+    let part_1: usize = points.par_iter().map(|p| p.exposed_sides(&points)).sum();
+    let part_2: usize = points
+        .par_iter()
+        .map(|p| p.really_exposed_sides(&points))
+        .sum();
 
-    println!("{exposed_sides}");
-    println!("{really_exposed_sides}");
+    println!("{part_1}");
+    println!("{part_2}");
 }
