@@ -5,9 +5,9 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take},
     character::complete::{i64, line_ending},
-    combinator::{iterator, map, opt},
+    combinator::{map, opt, success},
     multi::fold_many0,
-    sequence::{separated_pair, terminated},
+    sequence::{preceded, separated_pair, terminated, tuple},
     IResult,
 };
 
@@ -29,25 +29,24 @@ enum Monkey<'a> {
     Div(MonkeyId<'a>, MonkeyId<'a>),
 }
 
+type MonkeyOp<'a> = fn(MonkeyId<'a>, MonkeyId<'a>) -> Monkey<'a>;
+
 impl<'a> Monkey<'a> {
     pub fn parse(input: &'a str) -> IResult<&str, Self> {
         alt((
             map(i64, Self::Num),
             map(
-                separated_pair(MonkeyId::parse, tag(" + "), MonkeyId::parse),
-                |(lhs, rhs)| Self::Add(lhs, rhs),
-            ),
-            map(
-                separated_pair(MonkeyId::parse, tag(" - "), MonkeyId::parse),
-                |(lhs, rhs)| Self::Sub(lhs, rhs),
-            ),
-            map(
-                separated_pair(MonkeyId::parse, tag(" * "), MonkeyId::parse),
-                |(lhs, rhs)| Self::Mul(lhs, rhs),
-            ),
-            map(
-                separated_pair(MonkeyId::parse, tag(" / "), MonkeyId::parse),
-                |(lhs, rhs)| Self::Div(lhs, rhs),
+                tuple((
+                    MonkeyId::parse,
+                    alt((
+                        preceded(tag(" + "), success(Self::Add as MonkeyOp)),
+                        preceded(tag(" - "), success(Self::Sub as MonkeyOp)),
+                        preceded(tag(" * "), success(Self::Mul as MonkeyOp)),
+                        preceded(tag(" / "), success(Self::Div as MonkeyOp)),
+                    )),
+                    MonkeyId::parse,
+                )),
+                |(lhs, op, rhs)| op(lhs, rhs),
             ),
         ))(input)
     }
