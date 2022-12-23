@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, mem};
 
 use aoc_2022_common::challenge_input;
 use nom::{
@@ -79,20 +79,74 @@ impl<'a> Monkey<'a> {
 
 fn main() {
     let input = challenge_input();
-    let (_, mut monkeys) = Monkey::parse_map(&input).unwrap();
+    let (_, monkeys) = Monkey::parse_map(&input).unwrap();
     let root = MonkeyId("root");
     let part_1 = &monkeys[&root].value(&monkeys);
     println!("{part_1}");
 
-    let (left_expr, right_expr) = Expr::from_monkeys(&monkeys);
-    println!("{:?}", left_expr);
-    println!("{:?}", right_expr);
-    // dbg!(right_expr);
+    let (mut human_expr, mut other_expr) = Expr::from_monkeys(&monkeys);
+    println!("{:?}", human_expr.contains_human());
+    println!("{:?}", other_expr.contains_human());
+    if !human_expr.contains_human() {
+        mem::swap(&mut human_expr, &mut other_expr);
+    }
+
+    while human_expr != Expr::Human {
+        (human_expr, other_expr) = simplify_expr(human_expr, other_expr);
+    }
+
+    dbg!(other_expr);
+}
+
+fn simplify_expr(human: Expr, other: Expr) -> (Expr, Expr) {
+    let new_human: Expr;
+    let new_other: Expr;
+
+    let other_box = Box::new(other);
+
+    match &human {
+        Expr::Human => panic!("attempt to simplify human"),
+        Expr::Num(_) => panic!("attempt to simplify number"),
+        Expr::Add(lhs, rhs) if lhs.contains_human() => {
+            new_human = *lhs.to_owned();
+            new_other = Expr::Sub(other_box, rhs.to_owned());
+        }
+        Expr::Add(lhs, rhs) => {
+            new_human = *rhs.to_owned();
+            new_other = Expr::Sub(other_box, lhs.to_owned());
+        }
+        Expr::Sub(lhs, rhs) if lhs.contains_human() => {
+            new_human = *lhs.to_owned();
+            new_other = Expr::Add(other_box, rhs.to_owned());
+        }
+        Expr::Sub(lhs, rhs) => {
+            new_human = *rhs.to_owned();
+            new_other = Expr::Sub(lhs.to_owned(), other_box);
+        }
+        Expr::Mul(lhs, rhs) if lhs.contains_human() => {
+            new_human = *lhs.to_owned();
+            new_other = Expr::Div(other_box, rhs.to_owned());
+        }
+        Expr::Mul(lhs, rhs) => {
+            new_human = *rhs.to_owned();
+            new_other = Expr::Div(other_box, lhs.to_owned());
+        }
+        Expr::Div(lhs, rhs) if lhs.contains_human() => {
+            new_human = *lhs.to_owned();
+            new_other = Expr::Mul(other_box, rhs.to_owned());
+        }
+        Expr::Div(lhs, rhs) => {
+            new_human = *rhs.to_owned();
+            new_other = Expr::Div(lhs.to_owned(), other_box);
+        }
+    }
+
+    (new_human, new_other)
 }
 
 /// I could've reused Monkey, but would rather have
 /// a recursive structure than a HashMap for part 2
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 enum Expr {
     Human,
     Num(i64),
@@ -140,5 +194,34 @@ impl Expr {
             MonkeyId("humn") => Expr::Human,
             id => Expr::from_monkey(&monkeys[id], monkeys),
         }
+    }
+
+    fn contains_human(&self) -> bool {
+        match self {
+            Expr::Human => true,
+            Expr::Num(_) => false,
+            Expr::Add(lhs, rhs)
+            | Expr::Sub(lhs, rhs)
+            | Expr::Mul(lhs, rhs)
+            | Expr::Div(lhs, rhs) => lhs.contains_human() || rhs.contains_human(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn simplify_add() {
+        let human_expr = Expr::Add(Box::new(Expr::Human), Box::new(Expr::Num(4)));
+        let other_expr = Expr::Num(2);
+
+        let (new_human_expr, new_other_expr) = simplify_expr(human_expr, other_expr);
+
+        assert_eq!(new_human_expr, Expr::Human);
+        assert_eq!(
+            new_other_expr,
+            Expr::Sub(Box::new(Expr::Num(2)), Box::new(Expr::Num(4)))
+        );
     }
 }
