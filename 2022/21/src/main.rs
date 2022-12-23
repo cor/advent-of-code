@@ -78,24 +78,26 @@ impl<'a> Monkey<'a> {
 }
 
 fn main() {
+    // Part 1
     let input = challenge_input();
     let (_, monkeys) = Monkey::parse_map(&input).unwrap();
     let root = MonkeyId("root");
     let part_1 = &monkeys[&root].value(&monkeys);
     println!("{part_1}");
 
+    // Part 2
     let (mut human_expr, mut other_expr) = Expr::from_monkeys(&monkeys);
-    println!("{:?}", human_expr.contains_human());
-    println!("{:?}", other_expr.contains_human());
     if !human_expr.contains_human() {
         mem::swap(&mut human_expr, &mut other_expr);
     }
 
+    // Simplify unti we have Human = Expr
     while human_expr != Expr::Human {
         (human_expr, other_expr) = simplify_expr(human_expr, other_expr);
     }
 
-    dbg!(other_expr);
+    let part_2 = other_expr.value();
+    println!("{part_2}");
 }
 
 fn simplify_expr(human: Expr, other: Expr) -> (Expr, Expr) {
@@ -204,6 +206,17 @@ impl Expr {
             | Expr::Sub(lhs, rhs)
             | Expr::Mul(lhs, rhs)
             | Expr::Div(lhs, rhs) => lhs.contains_human() || rhs.contains_human(),
+        }
+    }
+
+    fn value(&self) -> i64 {
+        match self {
+            Expr::Human => panic!("Attempting to evaluate human"),
+            Expr::Num(n) => *n,
+            Expr::Add(lhs, rhs) => lhs.value() + rhs.value(),
+            Expr::Sub(lhs, rhs) => lhs.value() - rhs.value(),
+            Expr::Mul(lhs, rhs) => lhs.value() * rhs.value(),
+            Expr::Div(lhs, rhs) => lhs.value() / rhs.value(),
         }
     }
 }
