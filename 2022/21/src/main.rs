@@ -58,17 +58,29 @@ impl<'a> Monkey<'a> {
     pub fn parse_map(input: &'a str) -> IResult<&str, HashMap<MonkeyId, Self>> {
         fold_many0(
             terminated(Self::parse_with_id, opt(line_ending)),
-            HashMap::new,
+            || HashMap::with_capacity(3000),
             |mut map, (id, monkey)| {
                 map.insert(id, monkey);
                 map
             },
         )(input)
     }
+
+    pub fn value(&self, others: &HashMap<MonkeyId, Monkey>) -> i64 {
+        match self {
+            Monkey::Num(n) => *n,
+            Monkey::Add(lhs, rhs) => others[lhs].value(others) + others[rhs].value(others),
+            Monkey::Sub(lhs, rhs) => others[lhs].value(others) - others[rhs].value(others),
+            Monkey::Mul(lhs, rhs) => others[lhs].value(others) * others[rhs].value(others),
+            Monkey::Div(lhs, rhs) => others[lhs].value(others) / others[rhs].value(others),
+        }
+    }
 }
 
 fn main() {
     let input = challenge_input();
     let (_, monkeys) = Monkey::parse_map(&input).unwrap();
-    dbg!(monkeys);
+    let root = MonkeyId("root");
+    let part_1 = &monkeys[&root].value(&monkeys);
+    println!("{part_1}");
 }

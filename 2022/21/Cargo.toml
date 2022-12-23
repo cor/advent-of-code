@@ -8,3 +8,7 @@ edition = "2021"
 [dependencies]
 aoc-2022-common = { path = "../common/" }
 nom = "7.1.1"
+
+# [profiles.release]
+# lto = "fat"
+# codegen-units = 1
