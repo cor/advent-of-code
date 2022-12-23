@@ -65,7 +65,7 @@
 
                     fn main() {
                         let input = challenge_input();
-                        println!("{}", input);
+                        println!("{input}");
                     }' > ./"$1"/src/main.rs
 
                     echo "Cargo project created!";
