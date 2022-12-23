@@ -84,21 +84,61 @@ fn main() {
     let part_1 = &monkeys[&root].value(&monkeys);
     println!("{part_1}");
 
-    let Monkey::Add(lhs, rhs) = &monkeys[&root].clone() else {
-        panic!("Invalid rooot monkey for part 2");
-    };
+    let (left_expr, right_expr) = Expr::from_monkeys(&monkeys);
+    println!("{:?}", left_expr);
+    println!("{:?}", right_expr);
+    // dbg!(right_expr);
+}
 
-    let humn = MonkeyId("humn");
+/// I could've reused Monkey, but would rather have
+/// a recursive structure than a HashMap for part 2
+#[derive(Debug, Clone)]
+enum Expr {
+    Human,
+    Num(i64),
+    Add(Box<Expr>, Box<Expr>),
+    Sub(Box<Expr>, Box<Expr>),
+    Mul(Box<Expr>, Box<Expr>),
+    Div(Box<Expr>, Box<Expr>),
+}
 
-    for i in 0..i64::MAX {
-        monkeys.insert(humn, Monkey::Num(i));
+impl Expr {
+    pub fn from_monkeys(monkeys: &HashMap<MonkeyId, Monkey>) -> (Expr, Expr) {
+        let root = MonkeyId("root");
+        let Monkey::Add(lhs, rhs) = &monkeys[&root].clone() else {
+            panic!("Invalid rooot monkey for part 2");
+        };
+        let left_expr = Expr::from_monkey(&monkeys[lhs], monkeys);
+        let right_expr = Expr::from_monkey(&monkeys[rhs], monkeys);
 
-        if monkeys[lhs].value(&monkeys) == monkeys[rhs].value(&monkeys) {
-            println!("Gottem: {i}");
+        (left_expr, right_expr)
+    }
+
+    fn from_monkey(monkey: &Monkey, monkeys: &HashMap<MonkeyId, Monkey>) -> Expr {
+        match monkey {
+            Monkey::Num(n) => Expr::Num(*n),
+            Monkey::Add(lhs, rhs) => Expr::Add(
+                Box::new(Expr::human_or_monkey(lhs, monkeys)),
+                Box::new(Expr::human_or_monkey(rhs, monkeys)),
+            ),
+            Monkey::Sub(lhs, rhs) => Expr::Sub(
+                Box::new(Expr::human_or_monkey(lhs, monkeys)),
+                Box::new(Expr::human_or_monkey(rhs, monkeys)),
+            ),
+            Monkey::Mul(lhs, rhs) => Expr::Mul(
+                Box::new(Expr::human_or_monkey(lhs, monkeys)),
+                Box::new(Expr::human_or_monkey(rhs, monkeys)),
+            ),
+            Monkey::Div(lhs, rhs) => Expr::Div(
+                Box::new(Expr::human_or_monkey(lhs, monkeys)),
+                Box::new(Expr::human_or_monkey(rhs, monkeys)),
+            ),
         }
-
-        if i % 100_000 == 0 {
-            println!("{i}");
+    }
+    fn human_or_monkey(input: &MonkeyId, monkeys: &HashMap<MonkeyId, Monkey>) -> Expr {
+        match input {
+            MonkeyId("humn") => Expr::Human,
+            id => Expr::from_monkey(&monkeys[id], monkeys),
         }
     }
 }
