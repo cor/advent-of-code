@@ -159,6 +159,7 @@ name = "aoc-2022-23"
 version = "0.1.0"
 dependencies = [
  "aoc-2022-common",
+ "nalgebra",
 ]
 
 [[package]]
