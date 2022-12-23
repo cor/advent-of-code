@@ -11,7 +11,7 @@ use nom::{
     IResult,
 };
 
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
 struct MonkeyId<'a>(&'a str);
 
 impl<'a> MonkeyId<'a> {
@@ -79,8 +79,26 @@ impl<'a> Monkey<'a> {
 
 fn main() {
     let input = challenge_input();
-    let (_, monkeys) = Monkey::parse_map(&input).unwrap();
+    let (_, mut monkeys) = Monkey::parse_map(&input).unwrap();
     let root = MonkeyId("root");
     let part_1 = &monkeys[&root].value(&monkeys);
     println!("{part_1}");
+
+    let Monkey::Add(lhs, rhs) = &monkeys[&root].clone() else {
+        panic!("Invalid rooot monkey for part 2");
+    };
+
+    let humn = MonkeyId("humn");
+
+    for i in 0..i64::MAX {
+        monkeys.insert(humn, Monkey::Num(i));
+
+        if monkeys[lhs].value(&monkeys) == monkeys[rhs].value(&monkeys) {
+            println!("Gottem: {i}");
+        }
+
+        if i % 100_000 == 0 {
+            println!("{i}");
+        }
+    }
 }
