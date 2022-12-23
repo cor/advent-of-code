@@ -106,49 +106,47 @@ fn simplify_expr(human: Expr, other: Expr) -> (Expr, Expr) {
 
     let other_box = Box::new(other);
 
-    match &human {
+    match human {
         Expr::Human => panic!("attempt to simplify human"),
         Expr::Num(_) => panic!("attempt to simplify number"),
         Expr::Add(lhs, rhs) if lhs.contains_human() => {
-            new_human = *lhs.to_owned();
-            new_other = Expr::Sub(other_box, rhs.to_owned());
+            new_human = *lhs;
+            new_other = Expr::Sub(other_box, rhs);
         }
         Expr::Add(lhs, rhs) => {
-            new_human = *rhs.to_owned();
-            new_other = Expr::Sub(other_box, lhs.to_owned());
+            new_human = *rhs;
+            new_other = Expr::Sub(other_box, lhs);
         }
         Expr::Sub(lhs, rhs) if lhs.contains_human() => {
-            new_human = *lhs.to_owned();
-            new_other = Expr::Add(other_box, rhs.to_owned());
+            new_human = *lhs;
+            new_other = Expr::Add(other_box, rhs);
         }
         Expr::Sub(lhs, rhs) => {
-            new_human = *rhs.to_owned();
-            new_other = Expr::Sub(lhs.to_owned(), other_box);
+            new_human = *rhs;
+            new_other = Expr::Sub(lhs, other_box);
         }
         Expr::Mul(lhs, rhs) if lhs.contains_human() => {
-            new_human = *lhs.to_owned();
-            new_other = Expr::Div(other_box, rhs.to_owned());
+            new_human = *lhs;
+            new_other = Expr::Div(other_box, rhs);
         }
         Expr::Mul(lhs, rhs) => {
-            new_human = *rhs.to_owned();
-            new_other = Expr::Div(other_box, lhs.to_owned());
+            new_human = *rhs;
+            new_other = Expr::Div(other_box, lhs);
         }
         Expr::Div(lhs, rhs) if lhs.contains_human() => {
-            new_human = *lhs.to_owned();
-            new_other = Expr::Mul(other_box, rhs.to_owned());
+            new_human = *lhs;
+            new_other = Expr::Mul(other_box, rhs);
         }
         Expr::Div(lhs, rhs) => {
-            new_human = *rhs.to_owned();
-            new_other = Expr::Div(lhs.to_owned(), other_box);
+            new_human = *rhs;
+            new_other = Expr::Div(lhs, other_box);
         }
     }
 
     (new_human, new_other)
 }
 
-/// I could've reused Monkey, but would rather have
-/// a recursive structure than a HashMap for part 2
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 enum Expr {
     Human,
     Num(i64),
