@@ -61,6 +61,7 @@ trait ElvesExt {
     fn parse(input: &str) -> Elves;
     fn edges(&self) -> (i64, i64, i64, i64);
     fn print(&self, round: usize);
+    fn part_1(&self) -> i64;
 }
 
 impl ElvesExt for Elves {
@@ -123,6 +124,8 @@ impl ElvesExt for Elves {
             for x in min_x..=max_x {
                 if self.contains(&Elve::new(x, y)) {
                     print!("\x1b[93m⬤ \x1b[0m");
+                } else if x == 0 && y == 0 {
+                    print!("\x1b[38;5;246m∘ \x1b[0m");
                 } else {
                     print!("\x1b[38;5;240m∘ \x1b[0m");
                 }
@@ -131,22 +134,42 @@ impl ElvesExt for Elves {
         }
 
         print!(" ┗━");
-        let end = format!(" R-{:0width$} ", round, width = 2);
+        let end = format!(" R-{:0width$} ", round, width = 3);
         (0..=((max_x - min_x) * 2 - end.len() as i64)).for_each(|_| print!("━"));
         print!("\x1b[1;38;5;160m{}\x1b[0m", end);
-        println!("\x1b[38;5;29m━┛");
+        println!("\x1b[38;5;29m━┛\x1b[0m");
 
         println!();
+    }
+
+    fn part_1(&self) -> i64 {
+        let (min_y, max_x, max_y, min_x) = self.edges();
+        (max_x - min_x + 1) * (max_y - min_y + 1) - self.len() as i64
     }
 }
 
 fn main() {
     let input = challenge_input();
     let mut elves = Elves::parse(&input);
-    for round in 0..1000 {
+    let mut part_1 = None;
+    let mut part_2 = None;
+    for round in 0.. {
         print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
         elves.print(round);
+        let next_elves = elves.next(round);
+        if next_elves == elves {
+            part_2 = Some(round + 1);
+            break;
+        }
+
         elves = elves.next(round);
         thread::sleep(time::Duration::from_millis(50));
+
+        if round == 10 {
+            part_1 = Some(elves.part_1());
+        }
     }
+
+    println!("Part 1: \x1b[1;38;5;160m{}\x1b[0m", part_1.unwrap());
+    println!("Part 2: \x1b[1;38;5;160m{}\x1b[0m", part_2.unwrap());
 }
