@@ -69,102 +69,50 @@ trait ElvesExt {
 
 impl ElvesExt for Elves {
     fn next(&self, round: usize) -> Elves {
-        let propsed_poss = self
+        let proposed_positions = self
             .par_iter()
             .map(|e| (e, e + e.proposed_dir(round, self)))
             .collect::<Vec<_>>();
 
-        let (prop_x, prop_y) = propsed_poss.split_at(propsed_poss.len() / 2);
+        let (first_props_half, second_props_half) =
+            proposed_positions.split_at(proposed_positions.len() / 2);
 
-        let (prop_a, prop_b) = prop_x.split_at(prop_x.len() / 2);
-        let (prop_c, prop_d) = prop_y.split_at(prop_y.len() / 2);
-        let mut map_a = HashMap::<Elve, usize>::with_capacity(5000);
-        let mut map_b = HashMap::<Elve, usize>::with_capacity(5000);
-        let mut map_c = HashMap::<Elve, usize>::with_capacity(5000);
-        let mut map_d = HashMap::<Elve, usize>::with_capacity(5000);
+        // Building this map is expensive, so we're splitting it in two
+        let mut props_counts_a = HashMap::<Elve, usize>::with_capacity(5_000);
+        let mut props_counts_b = HashMap::<Elve, usize>::with_capacity(5_000);
 
-        rayon::scope(|s| {
-            s.spawn(|_| {
-                prop_a
-                    .iter()
-                    .for_each(|(_, e)| *map_a.entry(*e).or_insert(0usize) += 1)
-            });
-            s.spawn(|_| {
-                prop_b
-                    .iter()
-                    .for_each(|(_, e)| *map_b.entry(*e).or_insert(0usize) += 1)
-            });
-            s.spawn(|_| {
-                prop_c
-                    .iter()
-                    .for_each(|(_, e)| *map_c.entry(*e).or_insert(0usize) += 1)
-            });
-            s.spawn(|_| {
-                prop_d
-                    .iter()
-                    .for_each(|(_, e)| *map_d.entry(*e).or_insert(0usize) += 1)
-            });
-        });
+        rayon::join(
+            || {
+                first_props_half.iter().for_each(|(_, new_elve)| {
+                    *props_counts_a.entry(*new_elve).or_insert(0usize) += 1
+                })
+            },
+            || {
+                second_props_half.iter().for_each(|(_, new_elve)| {
+                    *props_counts_b.entry(*new_elve).or_insert(0usize) += 1
+                })
+            },
+        );
 
-        // rayon::join(
-        //     || {
-        //         rayon::join(
-        //             || {
-        //                 prop_c
-        //                     .iter()
-        //                     .for_each(|(_, e)| *map_c.entry(*e).or_insert(0usize) += 1)
-        //             },
-        //             || {
-        //                 prop_d
-        //                     .iter()
-        //                     .for_each(|(_, e)| *map_d.entry(*e).or_insert(0usize) += 1)
-        //             },
-        //         );
-        //         for (k, v) in map_c {
-        //             *map_d.entry(k).or_insert(0usize) += v;
-        //         }
-        //     },
-        //     || {
-        //         rayon::join(
-        //             || {
-        //                 prop_a
-        //                     .iter()
-        //                     .for_each(|(_, e)| *map_a.entry(*e).or_insert(0usize) += 1)
-        //             },
-        //             || {
-        //                 prop_b
-        //                     .iter()
-        //                     .for_each(|(_, e)| *map_b.entry(*e).or_insert(0usize) += 1)
-        //             },
-        //         );
-        //         for (k, v) in map_a {
-        //             *map_b.entry(k).or_insert(0usize) += v;
-        //         }
-        //     },
-        // );
-
-        for woo_map in [map_b, map_c, map_d] {
-            for (k, v) in woo_map {
-                *map_a.entry(k).or_insert(0usize) += v;
-            }
+        // combine prop_counts_a and props_counts_b into props_counts_a
+        for (k, v) in props_counts_b {
+            *props_counts_a.entry(k).or_insert(0usize) += v;
         }
 
-        propsed_poss
+        proposed_positions
             .par_iter()
-            .map(
-                |(&old_e, new_e)| {
-                    if map_a[new_e] > 1 {
-                        old_e
-                    } else {
-                        *new_e
-                    }
-                },
-            )
+            .map(|(&old_elve, new_elve)| {
+                if props_counts_a[new_elve] > 1 {
+                    old_elve
+                } else {
+                    *new_elve
+                }
+            })
             .collect()
     }
 
     fn parse(input: &str) -> Elves {
-        let mut elves = Elves::with_capacity(10_000);
+        let mut elves = Elves::with_capacity(5_000);
         for (y, line) in input.lines().enumerate() {
             for (x, char) in line.chars().enumerate() {
                 match char {
