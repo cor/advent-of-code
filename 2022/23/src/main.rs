@@ -195,13 +195,13 @@ fn main() {
     let mut smallest_x = 0;
     let mut smallest_y = 0;
 
-    // clear_screen();
-    // println!();
-    // println!();
-    // println!();
-    // println!("     *** Merry Christmas! ***");
+    clear_screen();
+    println!();
+    println!();
+    println!();
+    println!("     *** Merry Christmas! ***");
 
-    for round in 0.. {
+    for round in 0..918 {
         if round == 11 {
             part_1 = Some(elves.part_1());
         }
@@ -213,26 +213,25 @@ fn main() {
 
         // update the smallest_x and smallest_y we've encountered
         elves = elves.next(round);
-        // let (min_y, _, _, min_x) = elves.edges();
-        // smallest_x = smallest_x.min(min_x);
-        // smallest_y = smallest_y.min(min_y);
-        // thread::sleep(time::Duration::from_millis(50));
+        let (min_y, _, _, min_x) = elves.edges();
+        smallest_x = smallest_x.min(min_x);
+        smallest_y = smallest_y.min(min_y);
     }
 
     // reset
-    // elves = Elves::parse(&input);
-    // for round in 0.. {
-    //     // clear the screen
-    //     clear_screen();
-    //     elves.print(round, smallest_y, smallest_x);
-    //     let next_elves = elves.next(round);
-    //     if next_elves == elves {
-    //         break;
-    //     }
-    //     elves = elves.next(round);
+    elves = Elves::parse(&input);
+    for round in 0.. {
+        // clear the screen
+        clear_screen();
+        elves.print(round, smallest_y, smallest_x);
+        let next_elves = elves.next(round);
+        if next_elves == elves {
+            break;
+        }
+        elves = elves.next(round);
 
-    //     thread::sleep(time::Duration::from_millis(50));
-    // }
+        thread::sleep(time::Duration::from_millis(50));
+    }
 
     println!();
     println!();
@@ -248,8 +247,8 @@ fn main() {
         part_2.unwrap()
     );
 
-    // println!();
-    // println!();
-    // println!();
-    // println!();
+    println!();
+    println!();
+    println!();
+    println!();
 }
