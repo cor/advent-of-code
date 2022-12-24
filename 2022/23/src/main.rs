@@ -1,4 +1,5 @@
 use core::time;
+use rayon::prelude::*;
 use std::{collections::HashSet, thread};
 
 use aoc_2022_common::challenge_input;
@@ -65,7 +66,7 @@ trait ElvesExt {
 impl ElvesExt for Elves {
     fn next(&self, round: usize) -> Elves {
         let propsed_poss = self
-            .iter()
+            .par_iter()
             .map(|e| (e, e + e.proposed_dir(round, self)))
             .collect::<HashSet<_>>();
 
@@ -142,10 +143,10 @@ impl ElvesExt for Elves {
 fn main() {
     let input = challenge_input();
     let mut elves = Elves::parse(&input);
-    for round in 0..100 {
+    for round in 0..1000 {
         print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
         elves.print(round);
         elves = elves.next(round);
-        thread::sleep(time::Duration::from_millis(1000));
+        thread::sleep(time::Duration::from_millis(50));
     }
 }

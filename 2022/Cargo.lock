@@ -160,6 +160,7 @@ version = "0.1.0"
 dependencies = [
  "aoc-2022-common",
  "nalgebra",
+ "rayon",
 ]
 
 [[package]]
