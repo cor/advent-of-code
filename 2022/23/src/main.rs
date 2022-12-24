@@ -1,6 +1,9 @@
 use core::time;
 use rayon::prelude::*;
-use std::{collections::HashSet, thread};
+use std::{
+    collections::{HashMap, HashSet},
+    thread,
+};
 
 use aoc_2022_common::challenge_input;
 use nalgebra::{Point2, Vector2};
@@ -29,7 +32,7 @@ const SCANS: [([Dir; 3], Dir); 4] = [(N_SCAN, N), (S_SCAN, S), (W_SCAN, W), (E_S
 
 trait ElveExt {
     fn scan(&self, scan: &[Dir], others: &Elves) -> bool;
-    fn proposed_dir(&self, round: usize, others: &HashSet<Elve>) -> Dir;
+    fn proposed_dir(&self, round: usize, others: &Elves) -> Dir;
 }
 
 impl ElveExt for Elve {
@@ -69,25 +72,99 @@ impl ElvesExt for Elves {
         let propsed_poss = self
             .par_iter()
             .map(|e| (e, e + e.proposed_dir(round, self)))
-            .collect::<HashSet<_>>();
+            .collect::<Vec<_>>();
+
+        let (prop_x, prop_y) = propsed_poss.split_at(propsed_poss.len() / 2);
+
+        let (prop_a, prop_b) = prop_x.split_at(prop_x.len() / 2);
+        let (prop_c, prop_d) = prop_y.split_at(prop_y.len() / 2);
+        let mut map_a = HashMap::<Elve, usize>::with_capacity(5000);
+        let mut map_b = HashMap::<Elve, usize>::with_capacity(5000);
+        let mut map_c = HashMap::<Elve, usize>::with_capacity(5000);
+        let mut map_d = HashMap::<Elve, usize>::with_capacity(5000);
+
+        rayon::scope(|s| {
+            s.spawn(|_| {
+                prop_a
+                    .iter()
+                    .for_each(|(_, e)| *map_a.entry(*e).or_insert(0usize) += 1)
+            });
+            s.spawn(|_| {
+                prop_b
+                    .iter()
+                    .for_each(|(_, e)| *map_b.entry(*e).or_insert(0usize) += 1)
+            });
+            s.spawn(|_| {
+                prop_c
+                    .iter()
+                    .for_each(|(_, e)| *map_c.entry(*e).or_insert(0usize) += 1)
+            });
+            s.spawn(|_| {
+                prop_d
+                    .iter()
+                    .for_each(|(_, e)| *map_d.entry(*e).or_insert(0usize) += 1)
+            });
+        });
+
+        // rayon::join(
+        //     || {
+        //         rayon::join(
+        //             || {
+        //                 prop_c
+        //                     .iter()
+        //                     .for_each(|(_, e)| *map_c.entry(*e).or_insert(0usize) += 1)
+        //             },
+        //             || {
+        //                 prop_d
+        //                     .iter()
+        //                     .for_each(|(_, e)| *map_d.entry(*e).or_insert(0usize) += 1)
+        //             },
+        //         );
+        //         for (k, v) in map_c {
+        //             *map_d.entry(k).or_insert(0usize) += v;
+        //         }
+        //     },
+        //     || {
+        //         rayon::join(
+        //             || {
+        //                 prop_a
+        //                     .iter()
+        //                     .for_each(|(_, e)| *map_a.entry(*e).or_insert(0usize) += 1)
+        //             },
+        //             || {
+        //                 prop_b
+        //                     .iter()
+        //                     .for_each(|(_, e)| *map_b.entry(*e).or_insert(0usize) += 1)
+        //             },
+        //         );
+        //         for (k, v) in map_a {
+        //             *map_b.entry(k).or_insert(0usize) += v;
+        //         }
+        //     },
+        // );
+
+        for woo_map in [map_b, map_c, map_d] {
+            for (k, v) in woo_map {
+                *map_a.entry(k).or_insert(0usize) += v;
+            }
+        }
 
         propsed_poss
-            .iter()
-            .map(|(&old_e, new_e)| {
-                if propsed_poss
-                    .iter()
-                    .any(|(&o_e, n_e)| o_e != old_e && n_e == new_e)
-                {
-                    old_e
-                } else {
-                    *new_e
-                }
-            })
+            .par_iter()
+            .map(
+                |(&old_e, new_e)| {
+                    if map_a[new_e] > 1 {
+                        old_e
+                    } else {
+                        *new_e
+                    }
+                },
+            )
             .collect()
     }
 
     fn parse(input: &str) -> Elves {
-        let mut elves = Elves::new();
+        let mut elves = Elves::with_capacity(10_000);
         for (y, line) in input.lines().enumerate() {
             for (x, char) in line.chars().enumerate() {
                 match char {
@@ -170,11 +247,11 @@ fn main() {
     let mut smallest_x = 0;
     let mut smallest_y = 0;
 
-    clear_screen();
-    println!();
-    println!();
-    println!();
-    println!("     *** Merry Christmas! ***");
+    // clear_screen();
+    // println!();
+    // println!();
+    // println!();
+    // println!("     *** Merry Christmas! ***");
 
     for round in 0.. {
         if round == 11 {
@@ -188,26 +265,26 @@ fn main() {
 
         // update the smallest_x and smallest_y we've encountered
         elves = elves.next(round);
-        let (min_y, _, _, min_x) = elves.edges();
-        smallest_x = smallest_x.min(min_x);
-        smallest_y = smallest_y.min(min_y);
+        // let (min_y, _, _, min_x) = elves.edges();
+        // smallest_x = smallest_x.min(min_x);
+        // smallest_y = smallest_y.min(min_y);
         // thread::sleep(time::Duration::from_millis(50));
     }
 
     // reset
-    elves = Elves::parse(&input);
-    for round in 0.. {
-        // clear the screen
-        clear_screen();
-        elves.print(round, smallest_y, smallest_x);
-        let next_elves = elves.next(round);
-        if next_elves == elves {
-            break;
-        }
-        elves = elves.next(round);
+    // elves = Elves::parse(&input);
+    // for round in 0.. {
+    //     // clear the screen
+    //     clear_screen();
+    //     elves.print(round, smallest_y, smallest_x);
+    //     let next_elves = elves.next(round);
+    //     if next_elves == elves {
+    //         break;
+    //     }
+    //     elves = elves.next(round);
 
-        thread::sleep(time::Duration::from_millis(50));
-    }
+    //     thread::sleep(time::Duration::from_millis(50));
+    // }
 
     println!();
     println!();
@@ -223,8 +300,8 @@ fn main() {
         part_2.unwrap()
     );
 
-    println!();
-    println!();
-    println!();
-    println!();
+    // println!();
+    // println!();
+    // println!();
+    // println!();
 }
