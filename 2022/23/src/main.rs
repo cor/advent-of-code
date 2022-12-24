@@ -60,7 +60,7 @@ trait ElvesExt {
     fn next(&self, round: usize) -> Elves;
     fn parse(input: &str) -> Elves;
     fn edges(&self) -> (i64, i64, i64, i64);
-    fn print(&self, round: usize);
+    fn print(&self, round: usize, end_min_y: i64, end_min_x: i64);
     fn part_1(&self) -> i64;
 }
 
@@ -112,15 +112,25 @@ impl ElvesExt for Elves {
         )
     }
 
-    fn print(&self, round: usize) {
+    fn print(&self, round: usize, end_min_y: i64, end_min_x: i64) {
         let (min_y, max_x, max_y, min_x) = self.edges();
 
-        print!("\x1b[38;5;29m ┏");
+        let extra_x_space = 4;
+        let extra_y_space = 3;
+
+        let y_correct_range = 0..((min_y - end_min_y).abs() + extra_y_space);
+        let x_correct_range = 0..((min_x - end_min_x).abs() + extra_x_space);
+        // ensure that the visual remains aligned when the bounds expand
+        y_correct_range.for_each(|_| println!());
+
+        x_correct_range.clone().for_each(|_| print!("  "));
+        print!("\x1b[38;5;29m┏");
         (min_x..=(max_x)).for_each(|_| print!("━━"));
 
         println!("━┓\x1b[0m");
         for y in min_y..=max_y {
-            print!(" \x1b[38;5;29m┃ ");
+            x_correct_range.clone().for_each(|_| print!("  "));
+            print!("\x1b[38;5;29m┃ ");
             for x in min_x..=max_x {
                 if self.contains(&Elve::new(x, y)) {
                     print!("\x1b[93m⬤ \x1b[0m");
@@ -133,13 +143,12 @@ impl ElvesExt for Elves {
             println!("\x1b[38;5;29m┃");
         }
 
-        print!(" ┗━");
+        x_correct_range.for_each(|_| print!("  "));
+        print!("┗━");
         let end = format!(" R-{:0width$} ", round, width = 3);
         (0..=((max_x - min_x) * 2 - end.len() as i64)).for_each(|_| print!("━"));
         print!("\x1b[1;38;5;160m{}\x1b[0m", end);
         println!("\x1b[38;5;29m━┛\x1b[0m");
-
-        println!();
     }
 
     fn part_1(&self) -> i64 {
@@ -148,28 +157,74 @@ impl ElvesExt for Elves {
     }
 }
 
+fn clear_screen() {
+    print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
+}
+
 fn main() {
     let input = challenge_input();
     let mut elves = Elves::parse(&input);
     let mut part_1 = None;
     let mut part_2 = None;
+
+    let mut smallest_x = 0;
+    let mut smallest_y = 0;
+
+    clear_screen();
+    println!();
+    println!();
+    println!();
+    println!("     *** Merry Christmas! ***");
+
     for round in 0.. {
-        print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
-        elves.print(round);
+        if round == 11 {
+            part_1 = Some(elves.part_1());
+        }
         let next_elves = elves.next(round);
         if next_elves == elves {
             part_2 = Some(round + 1);
             break;
         }
 
+        // update the smallest_x and smallest_y we've encountered
         elves = elves.next(round);
-        thread::sleep(time::Duration::from_millis(50));
-
-        if round == 10 {
-            part_1 = Some(elves.part_1());
-        }
+        let (min_y, _, _, min_x) = elves.edges();
+        smallest_x = smallest_x.min(min_x);
+        smallest_y = smallest_y.min(min_y);
+        // thread::sleep(time::Duration::from_millis(50));
     }
 
-    println!("Part 1: \x1b[1;38;5;160m{}\x1b[0m", part_1.unwrap());
-    println!("Part 2: \x1b[1;38;5;160m{}\x1b[0m", part_2.unwrap());
+    // reset
+    elves = Elves::parse(&input);
+    for round in 0.. {
+        // clear the screen
+        clear_screen();
+        elves.print(round, smallest_y, smallest_x);
+        let next_elves = elves.next(round);
+        if next_elves == elves {
+            break;
+        }
+        elves = elves.next(round);
+
+        thread::sleep(time::Duration::from_millis(50));
+    }
+
+    println!();
+    println!();
+    println!();
+    println!();
+
+    println!(
+        "          Part 1: \x1b[1;38;5;160m{}\x1b[0m",
+        part_1.unwrap()
+    );
+    println!(
+        "          Part 2: \x1b[1;38;5;160m{}\x1b[0m",
+        part_2.unwrap()
+    );
+
+    println!();
+    println!();
+    println!();
+    println!();
 }
