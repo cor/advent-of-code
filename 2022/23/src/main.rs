@@ -195,7 +195,7 @@ fn main() {
     let input = challenge_input();
     let mut elves = Elves::parse(&input);
     let mut part_1 = None;
-    // let mut part_2 = None;
+    let mut part_2 = None;
 
     let mut smallest_x = 0;
     let mut smallest_y = 0;
@@ -206,15 +206,15 @@ fn main() {
     // println!();
     // println!("     *** Merry Christmas! ***");
 
-    for round in 0..918 {
+    for round in 0.. {
         if round == 11 {
             part_1 = Some(elves.part_1());
         }
         let next_elves = elves.next(round);
-        // if next_elves == elves {
-        //     part_2 = Some(round + 1);
-        //     break;
-        // }
+        if next_elves == elves {
+            part_2 = Some(round + 1);
+            break;
+        }
         // next_elves.print(round, -10, -10);
 
         // update the smallest_x and smallest_y we've encountered
@@ -248,10 +248,10 @@ fn main() {
         "          Part 1: \x1b[1;38;5;160m{}\x1b[0m",
         part_1.unwrap()
     );
-    // println!(
-    //     "          Part 2: \x1b[1;38;5;160m{}\x1b[0m",
-    //     part_2.unwrap()
-    // );
+    println!(
+        "          Part 2: \x1b[1;38;5;160m{}\x1b[0m",
+        part_2.unwrap()
+    );
 
     // println!();
     // println!();
