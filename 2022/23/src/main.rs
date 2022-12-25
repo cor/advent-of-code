@@ -1,15 +1,12 @@
 use rayon::prelude::*;
-use std::{
-    collections::{HashMap, HashSet},
-    ops::Add,
-};
+use std::{collections::HashSet, ops::Add};
 
 use aoc_2022_common::challenge_input;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 struct Point2 {
-    x: i64,
-    y: i64,
+    x: i32,
+    y: i32,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -27,11 +24,11 @@ enum Dir {
 
 use Dir::{E, N, NE, NW, S, SE, STAY, SW, W};
 
-impl Add<Dir> for Point2 {
+impl Add<Dir> for &Point2 {
     type Output = Point2;
 
     fn add(self, rhs: Dir) -> Self::Output {
-        let mut added = self;
+        let mut added = *self;
         match rhs {
             N => added.y -= 1,
             S => added.y += 1,
@@ -94,20 +91,20 @@ trait ElveExt {
 
 impl ElveExt for Elve {
     fn scan(&self, scan: &[Dir], others: &Elves) -> bool {
-        scan.iter().all(|&dir| !others.contains(&(*self + dir)))
+        scan.iter().all(|&dir| !others.contains(&(self + dir)))
     }
 
     #[must_use]
     #[inline(always)]
     fn proposed_dir(&self, round: usize, others: &Elves) -> Dir {
-        let around_scan = ((others.contains(&(*self + NW)) as u8) << 0)
-            + ((others.contains(&(*self + N)) as u8) << 1)
-            + ((others.contains(&(*self + NE)) as u8) << 2)
-            + ((others.contains(&(*self + E)) as u8) << 3)
-            + ((others.contains(&(*self + SE)) as u8) << 4)
-            + ((others.contains(&(*self + S)) as u8) << 5)
-            + ((others.contains(&(*self + SW)) as u8) << 6)
-            + ((others.contains(&(*self + W)) as u8) << 7);
+        let around_scan = ((others.contains(&(self + NW)) as u8) << 0)
+            + ((others.contains(&(self + N)) as u8) << 1)
+            + ((others.contains(&(self + NE)) as u8) << 2)
+            + ((others.contains(&(self + E)) as u8) << 3)
+            + ((others.contains(&(self + SE)) as u8) << 4)
+            + ((others.contains(&(self + S)) as u8) << 5)
+            + ((others.contains(&(self + SW)) as u8) << 6)
+            + ((others.contains(&(self + W)) as u8) << 7);
 
         if around_scan == 0 {
             return STAY;
@@ -141,20 +138,20 @@ impl ElveExt for Elve {
             }
 
             // Another elve also wants to go to our spot, so we won't go there.
-            if test(*self + prop_dir + main_dir, opposite_dir(main_dir)) {
+            if test(&(self + prop_dir) + main_dir, opposite_dir(main_dir)) {
                 return *self;
             }
         }
-        *self + prop_dir
+        self + prop_dir
     }
 }
 
 trait ElvesExt {
     fn next(&self, round: usize) -> Elves;
     fn parse(input: &str) -> Elves;
-    fn edges(&self) -> (i64, i64, i64, i64);
-    fn print(&self, round: usize, end_min_y: i64, end_min_x: i64);
-    fn part_1(&self) -> i64;
+    fn edges(&self) -> (i32, i32, i32, i32);
+    fn print(&self, round: usize, end_min_y: i32, end_min_x: i32);
+    fn part_1(&self) -> i32;
 }
 
 impl ElvesExt for Elves {
@@ -170,8 +167,8 @@ impl ElvesExt for Elves {
                 match char {
                     '#' => {
                         elves.insert(Elve {
-                            x: x as i64,
-                            y: y as i64,
+                            x: x as i32,
+                            y: y as i32,
                         });
                     }
                     '.' => {} // ground tile => do nothing
@@ -184,7 +181,7 @@ impl ElvesExt for Elves {
 
     // Returns the smallest containing rect in N E S W order
     #[inline(always)]
-    fn edges(&self) -> (i64, i64, i64, i64) {
+    fn edges(&self) -> (i32, i32, i32, i32) {
         (
             self.iter().map(|e| e.y).min().unwrap(),
             self.iter().map(|e| e.x).max().unwrap(),
@@ -193,7 +190,7 @@ impl ElvesExt for Elves {
         )
     }
 
-    fn print(&self, round: usize, end_min_y: i64, end_min_x: i64) {
+    fn print(&self, round: usize, end_min_y: i32, end_min_x: i32) {
         let (min_y, max_x, max_y, min_x) = self.edges();
 
         let extra_x_space = 4;
@@ -227,14 +224,14 @@ impl ElvesExt for Elves {
         x_correct_range.for_each(|_| print!("  "));
         print!("┗━");
         let end = format!(" R-{:0width$} ", round, width = 3);
-        (0..=((max_x - min_x) * 2 - end.len() as i64)).for_each(|_| print!("━"));
+        (0..=((max_x - min_x) * 2 - end.len() as i32)).for_each(|_| print!("━"));
         print!("\x1b[1;38;5;160m{}\x1b[0m", end);
         println!("\x1b[38;5;29m━┛\x1b[0m");
     }
 
-    fn part_1(&self) -> i64 {
+    fn part_1(&self) -> i32 {
         let (min_y, max_x, max_y, min_x) = self.edges();
-        (max_x - min_x + 1) * (max_y - min_y + 1) - self.len() as i64
+        (max_x - min_x + 1) * (max_y - min_y + 1) - self.len() as i32
     }
 }
 
