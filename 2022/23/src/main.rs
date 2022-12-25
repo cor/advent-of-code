@@ -27,12 +27,14 @@ const S_SCAN: [Dir; 3] = [SW, S, SE];
 const W_SCAN: [Dir; 3] = [NW, W, SW];
 const E_SCAN: [Dir; 3] = [NE, E, SE];
 
+const MAIN_DIRS: [Dir; 4] = [N, S, W, E];
 const ALL_SCAN: [Dir; 8] = [N, NE, E, S, SE, NW, W, SW];
 const SCANS: [([Dir; 3], Dir); 4] = [(N_SCAN, N), (S_SCAN, S), (W_SCAN, W), (E_SCAN, E)];
 
 trait ElveExt {
     fn scan(&self, scan: &[Dir], others: &Elves) -> bool;
     fn proposed_dir(&self, round: usize, others: &Elves) -> Dir;
+    fn next(&self, round: usize, others: &Elves) -> Elve;
 }
 
 impl ElveExt for Elve {
@@ -43,7 +45,7 @@ impl ElveExt for Elve {
     #[must_use]
     fn proposed_dir(&self, round: usize, others: &Elves) -> Dir {
         if self.scan(&ALL_SCAN, others) {
-            return Vector2::new(0, 0);
+            return Dir::default();
         }
 
         for i in 0..SCANS.len() {
@@ -53,9 +55,46 @@ impl ElveExt for Elve {
             }
         }
 
-        // Unspecified in the puzzle, but when no direction is available,
-        // we keep standing still.
-        Vector2::new(0, 0)
+        Dir::default()
+    }
+
+    fn next(&self, round: usize, others: &Elves) -> Elve {
+        let prop_dir = self.proposed_dir(round, others);
+
+        if prop_dir == Dir::default() {
+            return *self;
+        }
+
+        let test = |candidate: Dir, dir: Dir| {
+            let candidate_point = self + candidate;
+            others.contains(&candidate_point) && candidate_point.proposed_dir(round, others) == dir
+        };
+
+        let opposite = |dir: Dir| {
+            if dir == N {
+                S
+            } else if dir == S {
+                N
+            } else if dir == E {
+                W
+            } else if dir == W {
+                E
+            } else {
+                panic!("attempt to get opposite of non NSWE dir");
+            }
+        };
+
+        for main_dir in MAIN_DIRS {
+            if main_dir == opposite(prop_dir) {
+                continue;
+            }
+
+            // Another elve also wants to go to our spot, so we won't go there.
+            if test(prop_dir + main_dir, opposite(main_dir)) {
+                return *self;
+            }
+        }
+        self + prop_dir
     }
 }
 
@@ -69,46 +108,7 @@ trait ElvesExt {
 
 impl ElvesExt for Elves {
     fn next(&self, round: usize) -> Elves {
-        let proposed_positions = self
-            .par_iter()
-            .map(|e| (e, e + e.proposed_dir(round, self)))
-            .collect::<Vec<_>>();
-
-        let (first_props_half, second_props_half) =
-            proposed_positions.split_at(proposed_positions.len() / 2);
-
-        // Building this map is expensive, so we're splitting it in two
-        let mut props_counts_a = HashMap::<Elve, usize>::with_capacity(5_000);
-        let mut props_counts_b = HashMap::<Elve, usize>::with_capacity(5_000);
-
-        rayon::join(
-            || {
-                first_props_half.iter().for_each(|(_, new_elve)| {
-                    *props_counts_a.entry(*new_elve).or_insert(0usize) += 1
-                })
-            },
-            || {
-                second_props_half.iter().for_each(|(_, new_elve)| {
-                    *props_counts_b.entry(*new_elve).or_insert(0usize) += 1
-                })
-            },
-        );
-
-        // combine prop_counts_a and props_counts_b into props_counts_a
-        for (k, v) in props_counts_b {
-            *props_counts_a.entry(k).or_insert(0usize) += v;
-        }
-
-        proposed_positions
-            .par_iter()
-            .map(|(&old_elve, new_elve)| {
-                if props_counts_a[new_elve] > 1 {
-                    old_elve
-                } else {
-                    *new_elve
-                }
-            })
-            .collect()
+        self.par_iter().map(|elve| elve.next(round, self)).collect()
     }
 
     fn parse(input: &str) -> Elves {
@@ -130,10 +130,10 @@ impl ElvesExt for Elves {
     // Returns the smallest containing rect in N E S W order
     fn edges(&self) -> (i64, i64, i64, i64) {
         (
-            self.iter().map(|e| e.y).min().unwrap(),
-            self.iter().map(|e| e.x).max().unwrap(),
-            self.iter().map(|e| e.y).max().unwrap(),
-            self.iter().map(|e| e.x).min().unwrap(),
+            self.par_iter().map(|e| e.y).min().unwrap(),
+            self.par_iter().map(|e| e.x).max().unwrap(),
+            self.par_iter().map(|e| e.y).max().unwrap(),
+            self.par_iter().map(|e| e.x).min().unwrap(),
         )
     }
 
@@ -195,11 +195,11 @@ fn main() {
     let mut smallest_x = 0;
     let mut smallest_y = 0;
 
-    clear_screen();
-    println!();
-    println!();
-    println!();
-    println!("     *** Merry Christmas! ***");
+    // clear_screen();
+    // println!();
+    // println!();
+    // println!();
+    // println!("     *** Merry Christmas! ***");
 
     for round in 0..918 {
         if round == 11 {
@@ -210,33 +210,34 @@ fn main() {
             part_2 = Some(round + 1);
             break;
         }
+        // next_elves.print(round, -10, -10);
 
         // update the smallest_x and smallest_y we've encountered
         elves = elves.next(round);
-        let (min_y, _, _, min_x) = elves.edges();
-        smallest_x = smallest_x.min(min_x);
-        smallest_y = smallest_y.min(min_y);
+        // let (min_y, _, _, min_x) = elves.edges();
+        // smallest_x = smallest_x.min(min_x);
+        // smallest_y = smallest_y.min(min_y);
     }
 
     // reset
-    elves = Elves::parse(&input);
-    for round in 0.. {
-        // clear the screen
-        clear_screen();
-        elves.print(round, smallest_y, smallest_x);
-        let next_elves = elves.next(round);
-        if next_elves == elves {
-            break;
-        }
-        elves = elves.next(round);
+    // elves = Elves::parse(&input);
+    // for round in 0.. {
+    //     // clear the screen
+    //     clear_screen();
+    //     elves.print(round, smallest_y, smallest_x);
+    //     let next_elves = elves.next(round);
+    //     if next_elves == elves {
+    //         break;
+    //     }
+    //     elves = elves.next(round);
 
-        thread::sleep(time::Duration::from_millis(50));
-    }
+    //     thread::sleep(time::Duration::from_millis(50));
+    // }
 
-    println!();
-    println!();
-    println!();
-    println!();
+    // println!();
+    // println!();
+    // println!();
+    // println!();
 
     println!(
         "          Part 1: \x1b[1;38;5;160m{}\x1b[0m",
@@ -247,8 +248,8 @@ fn main() {
         part_2.unwrap()
     );
 
-    println!();
-    println!();
-    println!();
-    println!();
+    // println!();
+    // println!();
+    // println!();
+    // println!();
 }
