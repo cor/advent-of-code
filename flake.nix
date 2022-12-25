@@ -79,7 +79,7 @@
           devShells = {
             default = pkgs.mkShell {
               buildInputs = [ self'.packages.rust-stable ]
-                ++ (with pkgs; [ bacon rnix-lsp hyperfine cargo-flamegraph ]);
+                ++ (with pkgs; [ bacon rnix-lsp hyperfine cargo-flamegraph lldb llvmPackages_14.llvm ]);
             };
           };
         };
