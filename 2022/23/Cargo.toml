@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 aoc-2022-common = { path = "../common/" }
-nalgebra = "0.31.4"
 rayon = "1.6.1"
 
 [profile.release]

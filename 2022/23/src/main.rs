@@ -1,26 +1,67 @@
-use core::time;
 use rayon::prelude::*;
 use std::{
     collections::{HashMap, HashSet},
-    thread,
+    ops::Add,
 };
 
 use aoc_2022_common::challenge_input;
-use nalgebra::{Point2, Vector2};
 
-type Elve = Point2<i64>;
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+struct Point2 {
+    x: i64,
+    y: i64,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+enum Dir {
+    N,
+    S,
+    W,
+    E,
+    NE,
+    NW,
+    SE,
+    SW,
+    STAY,
+}
+
+use Dir::{E, N, NE, NW, S, SE, STAY, SW, W};
+
+impl Add<Dir> for Point2 {
+    type Output = Point2;
+
+    fn add(self, rhs: Dir) -> Self::Output {
+        let mut added = self;
+        match rhs {
+            N => added.y -= 1,
+            S => added.y += 1,
+            W => added.x -= 1,
+            E => added.x += 1,
+            NE => {
+                added.y -= 1;
+                added.x += 1;
+            }
+            NW => {
+                added.y -= 1;
+                added.x -= 1;
+            }
+            SE => {
+                added.y += 1;
+                added.x += 1;
+            }
+            SW => {
+                added.y += 1;
+                added.x -= 1;
+            }
+            STAY => {}
+        }
+
+        added
+    }
+}
+
+type Elve = Point2;
 type Elves = HashSet<Elve>;
-type Dir = Vector2<i64>;
-
-const N: Dir = Dir::new(0, -1);
-const S: Dir = Dir::new(0, 1);
-const W: Dir = Dir::new(-1, 0);
-const E: Dir = Dir::new(1, 0);
-
-const NE: Dir = Dir::new(1, -1);
-const NW: Dir = Dir::new(-1, -1);
-const SE: Dir = Dir::new(1, 1);
-const SW: Dir = Dir::new(-1, 1);
 
 const MAIN_DIRS: [Dir; 4] = [N, S, W, E];
 const SCANS: [(u8, Dir); 4] = [
@@ -53,23 +94,23 @@ trait ElveExt {
 
 impl ElveExt for Elve {
     fn scan(&self, scan: &[Dir], others: &Elves) -> bool {
-        scan.iter().all(|&dir| !others.contains(&(self + dir)))
+        scan.iter().all(|&dir| !others.contains(&(*self + dir)))
     }
 
     #[must_use]
     #[inline(always)]
     fn proposed_dir(&self, round: usize, others: &Elves) -> Dir {
-        let around_scan = ((others.contains(&(self + NW)) as u8) << 0)
-            + ((others.contains(&(self + N)) as u8) << 1)
-            + ((others.contains(&(self + NE)) as u8) << 2)
-            + ((others.contains(&(self + E)) as u8) << 3)
-            + ((others.contains(&(self + SE)) as u8) << 4)
-            + ((others.contains(&(self + S)) as u8) << 5)
-            + ((others.contains(&(self + SW)) as u8) << 6)
-            + ((others.contains(&(self + W)) as u8) << 7);
+        let around_scan = ((others.contains(&(*self + NW)) as u8) << 0)
+            + ((others.contains(&(*self + N)) as u8) << 1)
+            + ((others.contains(&(*self + NE)) as u8) << 2)
+            + ((others.contains(&(*self + E)) as u8) << 3)
+            + ((others.contains(&(*self + SE)) as u8) << 4)
+            + ((others.contains(&(*self + S)) as u8) << 5)
+            + ((others.contains(&(*self + SW)) as u8) << 6)
+            + ((others.contains(&(*self + W)) as u8) << 7);
 
         if around_scan == 0 {
-            return Dir::default();
+            return STAY;
         }
 
         for i in 0..SCANS.len() {
@@ -79,20 +120,19 @@ impl ElveExt for Elve {
             }
         }
 
-        Dir::default()
+        STAY
     }
 
     #[inline(always)]
     fn next(&self, round: usize, others: &Elves) -> Elve {
         let prop_dir = self.proposed_dir(round, others);
 
-        if prop_dir == Dir::default() {
+        if prop_dir == STAY {
             return *self;
         }
 
-        let test = |candidate: Dir, dir: Dir| {
-            let candidate_point = self + candidate;
-            others.contains(&candidate_point) && candidate_point.proposed_dir(round, others) == dir
+        let test = |candidate: Elve, dir: Dir| {
+            others.contains(&candidate) && candidate.proposed_dir(round, others) == dir
         };
 
         for main_dir in MAIN_DIRS {
@@ -101,11 +141,11 @@ impl ElveExt for Elve {
             }
 
             // Another elve also wants to go to our spot, so we won't go there.
-            if test(prop_dir + main_dir, opposite_dir(main_dir)) {
+            if test(*self + prop_dir + main_dir, opposite_dir(main_dir)) {
                 return *self;
             }
         }
-        self + prop_dir
+        *self + prop_dir
     }
 }
 
@@ -129,7 +169,10 @@ impl ElvesExt for Elves {
             for (x, char) in line.chars().enumerate() {
                 match char {
                     '#' => {
-                        elves.insert(Elve::new(x as i64, y as i64));
+                        elves.insert(Elve {
+                            x: x as i64,
+                            y: y as i64,
+                        });
                     }
                     '.' => {} // ground tile => do nothing
                     t => panic!("Invalid tile {t} in input!"),
@@ -170,7 +213,7 @@ impl ElvesExt for Elves {
             x_correct_range.clone().for_each(|_| print!("  "));
             print!("\x1b[38;5;29m┃ ");
             for x in min_x..=max_x {
-                if self.contains(&Elve::new(x, y)) {
+                if self.contains(&Elve { x, y }) {
                     print!("\x1b[93m⬤ \x1b[0m");
                 } else if x == 0 && y == 0 {
                     print!("\x1b[38;5;246m∘ \x1b[0m");
