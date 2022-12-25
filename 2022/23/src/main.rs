@@ -22,14 +22,13 @@ const NW: Dir = Dir::new(-1, -1);
 const SE: Dir = Dir::new(1, 1);
 const SW: Dir = Dir::new(-1, 1);
 
-const N_SCAN: [Dir; 3] = [NW, N, NE];
-const S_SCAN: [Dir; 3] = [SW, S, SE];
-const W_SCAN: [Dir; 3] = [NW, W, SW];
-const E_SCAN: [Dir; 3] = [NE, E, SE];
-
 const MAIN_DIRS: [Dir; 4] = [N, S, W, E];
-const ALL_SCAN: [Dir; 8] = [N, NE, E, S, SE, NW, W, SW];
-const SCANS: [([Dir; 3], Dir); 4] = [(N_SCAN, N), (S_SCAN, S), (W_SCAN, W), (E_SCAN, E)];
+const SCANS: [(u8, Dir); 4] = [
+    (0b0000_0111, N),
+    (0b0111_0000, S),
+    (0b1100_0001, W),
+    (0b0001_1100, E),
+];
 
 #[inline(always)]
 fn opposite_dir(dir: Dir) -> Dir {
@@ -60,13 +59,22 @@ impl ElveExt for Elve {
     #[must_use]
     #[inline(always)]
     fn proposed_dir(&self, round: usize, others: &Elves) -> Dir {
-        if self.scan(&ALL_SCAN, others) {
+        let around_scan = ((others.contains(&(self + NW)) as u8) << 0)
+            + ((others.contains(&(self + N)) as u8) << 1)
+            + ((others.contains(&(self + NE)) as u8) << 2)
+            + ((others.contains(&(self + E)) as u8) << 3)
+            + ((others.contains(&(self + SE)) as u8) << 4)
+            + ((others.contains(&(self + S)) as u8) << 5)
+            + ((others.contains(&(self + SW)) as u8) << 6)
+            + ((others.contains(&(self + W)) as u8) << 7);
+
+        if around_scan == 0 {
             return Dir::default();
         }
 
         for i in 0..SCANS.len() {
             let (scan, dir) = SCANS[(round + i) % (SCANS.len())];
-            if self.scan(&scan, others) {
+            if around_scan & scan == 0 {
                 return dir;
             }
         }
