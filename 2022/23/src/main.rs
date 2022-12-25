@@ -5,8 +5,8 @@ use aoc_2022_common::challenge_input;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 struct Point2 {
-    x: i32,
-    y: i32,
+    x: i16,
+    y: i16,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -149,9 +149,9 @@ impl ElveExt for Elve {
 trait ElvesExt {
     fn next(&self, round: usize) -> Elves;
     fn parse(input: &str) -> Elves;
-    fn edges(&self) -> (i32, i32, i32, i32);
-    fn print(&self, round: usize, end_min_y: i32, end_min_x: i32);
-    fn part_1(&self) -> i32;
+    fn edges(&self) -> (i16, i16, i16, i16);
+    fn print(&self, round: usize, end_min_y: i16, end_min_x: i16);
+    fn part_1(&self) -> i16;
 }
 
 impl ElvesExt for Elves {
@@ -167,8 +167,8 @@ impl ElvesExt for Elves {
                 match char {
                     '#' => {
                         elves.insert(Elve {
-                            x: x as i32,
-                            y: y as i32,
+                            x: x as i16,
+                            y: y as i16,
                         });
                     }
                     '.' => {} // ground tile => do nothing
@@ -181,7 +181,7 @@ impl ElvesExt for Elves {
 
     // Returns the smallest containing rect in N E S W order
     #[inline(always)]
-    fn edges(&self) -> (i32, i32, i32, i32) {
+    fn edges(&self) -> (i16, i16, i16, i16) {
         (
             self.iter().map(|e| e.y).min().unwrap(),
             self.iter().map(|e| e.x).max().unwrap(),
@@ -190,7 +190,7 @@ impl ElvesExt for Elves {
         )
     }
 
-    fn print(&self, round: usize, end_min_y: i32, end_min_x: i32) {
+    fn print(&self, round: usize, end_min_y: i16, end_min_x: i16) {
         let (min_y, max_x, max_y, min_x) = self.edges();
 
         let extra_x_space = 4;
@@ -224,14 +224,14 @@ impl ElvesExt for Elves {
         x_correct_range.for_each(|_| print!("  "));
         print!("┗━");
         let end = format!(" R-{:0width$} ", round, width = 3);
-        (0..=((max_x - min_x) * 2 - end.len() as i32)).for_each(|_| print!("━"));
+        (0..=((max_x - min_x) * 2 - end.len() as i16)).for_each(|_| print!("━"));
         print!("\x1b[1;38;5;160m{}\x1b[0m", end);
         println!("\x1b[38;5;29m━┛\x1b[0m");
     }
 
-    fn part_1(&self) -> i32 {
+    fn part_1(&self) -> i16 {
         let (min_y, max_x, max_y, min_x) = self.edges();
-        (max_x - min_x + 1) * (max_y - min_y + 1) - self.len() as i32
+        (max_x - min_x + 1) * (max_y - min_y + 1) - self.len() as i16
     }
 }
 
