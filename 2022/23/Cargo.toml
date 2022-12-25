@@ -14,4 +14,4 @@ rayon = "1.6.1"
 lto = "fat"
 panic = "abort"
 codegen-units = 1
-opt-level = 10
+opt-level = 3
