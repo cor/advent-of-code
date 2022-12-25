@@ -31,6 +31,21 @@ const MAIN_DIRS: [Dir; 4] = [N, S, W, E];
 const ALL_SCAN: [Dir; 8] = [N, NE, E, S, SE, NW, W, SW];
 const SCANS: [([Dir; 3], Dir); 4] = [(N_SCAN, N), (S_SCAN, S), (W_SCAN, W), (E_SCAN, E)];
 
+#[inline(always)]
+fn opposite_dir(dir: Dir) -> Dir {
+    if dir == N {
+        S
+    } else if dir == S {
+        N
+    } else if dir == E {
+        W
+    } else if dir == W {
+        E
+    } else {
+        panic!("attempt to get opposite of non NSWE dir");
+    }
+}
+
 trait ElveExt {
     fn scan(&self, scan: &[Dir], others: &Elves) -> bool;
     fn proposed_dir(&self, round: usize, others: &Elves) -> Dir;
@@ -43,6 +58,7 @@ impl ElveExt for Elve {
     }
 
     #[must_use]
+    #[inline(always)]
     fn proposed_dir(&self, round: usize, others: &Elves) -> Dir {
         if self.scan(&ALL_SCAN, others) {
             return Dir::default();
@@ -58,6 +74,7 @@ impl ElveExt for Elve {
         Dir::default()
     }
 
+    #[inline(always)]
     fn next(&self, round: usize, others: &Elves) -> Elve {
         let prop_dir = self.proposed_dir(round, others);
 
@@ -70,27 +87,13 @@ impl ElveExt for Elve {
             others.contains(&candidate_point) && candidate_point.proposed_dir(round, others) == dir
         };
 
-        let opposite = |dir: Dir| {
-            if dir == N {
-                S
-            } else if dir == S {
-                N
-            } else if dir == E {
-                W
-            } else if dir == W {
-                E
-            } else {
-                panic!("attempt to get opposite of non NSWE dir");
-            }
-        };
-
         for main_dir in MAIN_DIRS {
-            if main_dir == opposite(prop_dir) {
+            if main_dir == opposite_dir(prop_dir) {
                 continue;
             }
 
             // Another elve also wants to go to our spot, so we won't go there.
-            if test(prop_dir + main_dir, opposite(main_dir)) {
+            if test(prop_dir + main_dir, opposite_dir(main_dir)) {
                 return *self;
             }
         }
@@ -107,6 +110,7 @@ trait ElvesExt {
 }
 
 impl ElvesExt for Elves {
+    #[inline(always)]
     fn next(&self, round: usize) -> Elves {
         self.par_iter().map(|elve| elve.next(round, self)).collect()
     }
@@ -128,12 +132,13 @@ impl ElvesExt for Elves {
     }
 
     // Returns the smallest containing rect in N E S W order
+    #[inline(always)]
     fn edges(&self) -> (i64, i64, i64, i64) {
         (
-            self.par_iter().map(|e| e.y).min().unwrap(),
-            self.par_iter().map(|e| e.x).max().unwrap(),
-            self.par_iter().map(|e| e.y).max().unwrap(),
-            self.par_iter().map(|e| e.x).min().unwrap(),
+            self.iter().map(|e| e.y).min().unwrap(),
+            self.iter().map(|e| e.x).max().unwrap(),
+            self.iter().map(|e| e.y).max().unwrap(),
+            self.iter().map(|e| e.x).min().unwrap(),
         )
     }
 
@@ -190,7 +195,7 @@ fn main() {
     let input = challenge_input();
     let mut elves = Elves::parse(&input);
     let mut part_1 = None;
-    let mut part_2 = None;
+    // let mut part_2 = None;
 
     let mut smallest_x = 0;
     let mut smallest_y = 0;
@@ -206,10 +211,10 @@ fn main() {
             part_1 = Some(elves.part_1());
         }
         let next_elves = elves.next(round);
-        if next_elves == elves {
-            part_2 = Some(round + 1);
-            break;
-        }
+        // if next_elves == elves {
+        //     part_2 = Some(round + 1);
+        //     break;
+        // }
         // next_elves.print(round, -10, -10);
 
         // update the smallest_x and smallest_y we've encountered
@@ -243,10 +248,10 @@ fn main() {
         "          Part 1: \x1b[1;38;5;160m{}\x1b[0m",
         part_1.unwrap()
     );
-    println!(
-        "          Part 2: \x1b[1;38;5;160m{}\x1b[0m",
-        part_2.unwrap()
-    );
+    // println!(
+    //     "          Part 2: \x1b[1;38;5;160m{}\x1b[0m",
+    //     part_2.unwrap()
+    // );
 
     // println!();
     // println!();
