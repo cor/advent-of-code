@@ -24,36 +24,36 @@ enum Dir {
 
 use Dir::{E, N, NE, NW, S, SE, STAY, SW, W};
 
-impl Add<Dir> for &Point2 {
+impl Add<Dir> for Point2 {
     type Output = Point2;
 
-    fn add(self, rhs: Dir) -> Self::Output {
-        let mut added = *self;
+    #[inline(always)]
+    fn add(mut self, rhs: Dir) -> Self::Output {
         match rhs {
-            N => added.y -= 1,
-            S => added.y += 1,
-            W => added.x -= 1,
-            E => added.x += 1,
+            N => self.y -= 1,
+            S => self.y += 1,
+            W => self.x -= 1,
+            E => self.x += 1,
             NE => {
-                added.y -= 1;
-                added.x += 1;
+                self.y -= 1;
+                self.x += 1;
             }
             NW => {
-                added.y -= 1;
-                added.x -= 1;
+                self.y -= 1;
+                self.x -= 1;
             }
             SE => {
-                added.y += 1;
-                added.x += 1;
+                self.y += 1;
+                self.x += 1;
             }
             SW => {
-                added.y += 1;
-                added.x -= 1;
+                self.y += 1;
+                self.x -= 1;
             }
             STAY => {}
         }
 
-        added
+        self
     }
 }
 
@@ -70,34 +70,30 @@ const SCANS: [(u8, Dir); 4] = [
 
 #[inline(always)]
 fn opposite_dir(dir: Dir) -> Dir {
-    if dir == N {
-        S
-    } else if dir == S {
-        N
-    } else if dir == E {
-        W
-    } else if dir == W {
-        E
-    } else {
-        panic!("attempt to get opposite of non NSWE dir");
+    match dir {
+        N => S,
+        S => N,
+        E => W,
+        W => E,
+        _ => panic!("attempt to get opposite of non NSWE dir"),
     }
 }
 
 trait ElveExt {
-    fn scan(&self, scan: &[Dir], others: &Elves) -> bool;
-    fn proposed_dir(&self, round: usize, others: &Elves) -> Dir;
-    fn next(&self, round: usize, others: &Elves) -> Elve;
+    fn scan(self, scan: &[Dir], others: &Elves) -> bool;
+    fn proposed_dir(self, round: usize, others: &Elves) -> Dir;
+    fn next(self, round: usize, others: &Elves) -> Elve;
 }
 
 impl ElveExt for Elve {
-    fn scan(&self, scan: &[Dir], others: &Elves) -> bool {
+    fn scan(self, scan: &[Dir], others: &Elves) -> bool {
         scan.iter().all(|&dir| !others.contains(&(self + dir)))
     }
 
     #[must_use]
     #[inline(always)]
-    fn proposed_dir(&self, round: usize, others: &Elves) -> Dir {
-        let around_scan = ((others.contains(&(self + NW)) as u8) << 0)
+    fn proposed_dir(self, round: usize, others: &Elves) -> Dir {
+        let around_scan = (others.contains(&(self + NW)) as u8)
             + ((others.contains(&(self + N)) as u8) << 1)
             + ((others.contains(&(self + NE)) as u8) << 2)
             + ((others.contains(&(self + E)) as u8) << 3)
@@ -121,11 +117,11 @@ impl ElveExt for Elve {
     }
 
     #[inline(always)]
-    fn next(&self, round: usize, others: &Elves) -> Elve {
+    fn next(self, round: usize, others: &Elves) -> Elve {
         let prop_dir = self.proposed_dir(round, others);
 
         if prop_dir == STAY {
-            return *self;
+            return self;
         }
 
         let test = |candidate: Elve, dir: Dir| {
@@ -138,8 +134,8 @@ impl ElveExt for Elve {
             }
 
             // Another elve also wants to go to our spot, so we won't go there.
-            if test(&(self + prop_dir) + main_dir, opposite_dir(main_dir)) {
-                return *self;
+            if test(self + prop_dir + main_dir, opposite_dir(main_dir)) {
+                return self;
             }
         }
         self + prop_dir
@@ -272,6 +268,9 @@ fn main() {
         // smallest_y = smallest_y.min(min_y);
     }
 
+    // const DIMENSIONS: usize = 500;
+    // let grid: [bool; DIMENSIONS * DIMENSIONS] = [false; DIMENSIONS * DIMENSIONS];
+
     // reset
     // elves = Elves::parse(&input);
     // for round in 0.. {
@@ -292,14 +291,19 @@ fn main() {
     // println!();
     // println!();
 
-    println!(
-        "          Part 1: \x1b[1;38;5;160m{}\x1b[0m",
-        part_1.unwrap()
-    );
-    println!(
-        "          Part 2: \x1b[1;38;5;160m{}\x1b[0m",
-        part_2.unwrap()
-    );
+    // println!(
+    //     "          Part 1: \x1b[1;38;5;160m{}\x1b[0m",
+    //     part_1.unwrap()
+    // );
+    // println!(
+    //     "          Part 2: \x1b[1;38;5;160m{}\x1b[0m",
+    //     part_2.unwrap()
+    // );
+
+    println!("{}", part_1.unwrap());
+    println!("{}", part_2.unwrap());
+
+    // println!("{}\n{}, part_1.unwrap(), part_2.unwrap());
 
     // println!();
     // println!();
