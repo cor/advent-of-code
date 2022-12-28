@@ -5,8 +5,8 @@ use aoc_2022_common::challenge_input;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 struct Point2 {
-    x: i16,
-    y: i16,
+    x: u16,
+    y: u16,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -58,7 +58,6 @@ impl Add<Dir> for Point2 {
 }
 
 type Elve = Point2;
-type Elves = HashSet<Elve>;
 
 const MAIN_DIRS: [Dir; 4] = [N, S, W, E];
 const SCANS: [(u8, Dir); 4] = [
@@ -163,8 +162,8 @@ impl ElvesExt for Elves {
                 match char {
                     '#' => {
                         elves.insert(Elve {
-                            x: x as i16,
-                            y: y as i16,
+                            x: x as u16,
+                            y: y as u16,
                         });
                     }
                     '.' => {} // ground tile => do nothing
@@ -231,9 +230,32 @@ impl ElvesExt for Elves {
     }
 }
 
+#[inline(always)]
+fn parse_grid(input: &str) -> [bool; DIMENSIONS_SQ] {
+    let mut grid: [bool; DIMENSIONS_SQ] = [false; DIMENSIONS_SQ];
+    for (y, line) in input.lines().enumerate() {
+        for (x, char) in line.chars().enumerate() {
+            match char {
+                '#' => {
+                    let grid_x = HALF_DIMENSIONS + x;
+                    let grid_y = HALF_DIMENSIONS + y;
+
+                    grid[grid_y * DIMENSIONS + grid_x] = true;
+                }
+                _ => {} // ground tile => do nothing
+            };
+        }
+    }
+    grid
+}
+
 fn clear_screen() {
     print!("{esc}[2J{esc}[1;1H", esc = 27 as char);
 }
+
+const DIMENSIONS: usize = 500;
+const DIMENSIONS_SQ: usize = DIMENSIONS * DIMENSIONS;
+const HALF_DIMENSIONS: usize = DIMENSIONS / 2;
 
 fn main() {
     let input = challenge_input();
@@ -243,6 +265,8 @@ fn main() {
 
     let mut smallest_x = 0;
     let mut smallest_y = 0;
+
+    let grid: [bool; DIMENSIONS_SQ] = [false; DIMENSIONS_SQ];
 
     // clear_screen();
     // println!();
@@ -267,9 +291,6 @@ fn main() {
         // smallest_x = smallest_x.min(min_x);
         // smallest_y = smallest_y.min(min_y);
     }
-
-    // const DIMENSIONS: usize = 500;
-    // let grid: [bool; DIMENSIONS * DIMENSIONS] = [false; DIMENSIONS * DIMENSIONS];
 
     // reset
     // elves = Elves::parse(&input);
