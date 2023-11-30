@@ -24,11 +24,13 @@
             stable = lib.overrideToolchain self'.packages.rust-stable;
           };
           days = map (pkgs.lib.fixedWidthNumber 2) (pkgs.lib.range 1 15);
+          days2023 = map (pkgs.lib.fixedWidthNumber 2) (pkgs.lib.range 1 1);
         in {
           packages = {
             rust-stable = inputs'.rust-overlay.packages.rust.override {
               extensions = [ "rust-src" "rust-analyzer" "clippy" ];
             };
+          # TODO: generate for each year
           } // (builtins.listToAttrs (map (day: {
             name = "2022-${day}";
             value = let
@@ -43,7 +45,24 @@
               '';
             };
 
-          }) days));
+          }) days))
+          // (builtins.listToAttrs (map (day: {
+            name = "2023-${day}";
+            value = let
+              build = let pname = "aoc-2023-${day}"; in crane.stable.buildPackage {
+                src = ./2023;
+                cargoBuildCommand = "cargo build --release -p ${pname}";
+                version = "0.1.0";
+                inherit pname;
+              };
+            in pkgs.writeShellApplication {
+              name = "aoc-2023-${day}";
+              text = ''
+                ${build}/bin/aoc-2023-${day} "$@"
+              '';
+            };
+
+          }) days2023));
             apps = {
               new-day = {
                 type = "app";
@@ -51,26 +70,26 @@
                   name = "new-day";
                   runtimeInputs = [ self'.packages.rust-stable ];
                   text = ''
-                    cd 2022
-                    cargo new "$1" --name="aoc-2022-$1"
+                    cd "$1"
+                    cargo new "$2" --name="aoc-$1-$2"
 
-                    echo "aoc-2022-common = { path = \"../common/\" }" >> ./"$1"/Cargo.toml
+                    echo "aoc-$1-common = { path = \"../common/\" }" >> ./"$2"/Cargo.toml
 
-                    mkdir "$1"/input
+                    mkdir "$2"/input
 
-                    touch "$1"/input/example.txt
-                    touch "$1"/input/1.txt
+                    touch "$2"/input/example.txt
+                    touch "$2"/input/1.txt
 
-                    echo 'use aoc_2022_common::challenge_input;
+                    echo "use aoc_$1_common::challenge_input;
 
                     fn main() {
                         let input = challenge_input();
-                        println!("{input}");
-                    }' > ./"$1"/src/main.rs
+                        println!(\"{input}\");
+                    }" > ./"$2"/src/main.rs
 
                     echo "Cargo project created!";
-                    echo "You should add $1 to ./2022/Cargo.toml";
-                    echo "and also add $1 to days in ./flake.nix";
+                    echo "You should add $2 to ./$1/Cargo.toml";
+                    echo "and also add $2 to days in ./flake.nix";
                   '';
                 };
 
