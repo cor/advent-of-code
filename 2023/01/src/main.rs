@@ -68,15 +68,9 @@ fn first_digit_2(line: &str, direction: Direction) -> Option<u32> {
     }
 }
 
-fn calibration_value_1(line: &str) -> Option<u32> {
-    let left = first_digit_1(line, Left)?;
-    let right = first_digit_1(line, Right)?;
-    Some(left * 10 + right)
-}
-
-fn calibration_value_2(line: &str) -> Option<u32> {
-    let left = first_digit_2(line, Left)?;
-    let right = first_digit_2(line, Right)?;
+fn calibration_value(line: &str, finder: fn(&str, Direction) -> Option<u32>) -> Option<u32> {
+    let left = finder(line, Left)?;
+    let right = finder(line, Right)?;
     Some(left * 10 + right)
 }
 
@@ -85,11 +79,11 @@ fn main() {
     let lines = input.lines().collect::<Vec<_>>();
     let part_1: u32 = lines
         .iter()
-        .filter_map(|line| calibration_value_1(line))
+        .filter_map(|line| calibration_value(line, first_digit_1))
         .sum();
     let part_2: u32 = lines
         .iter()
-        .filter_map(|line| calibration_value_2(line))
+        .filter_map(|line| calibration_value(line, first_digit_2))
         .sum();
     println!("{part_1}");
     println!("{part_2}");
