@@ -63,6 +63,16 @@ fn main() {
         })
         .map(|game| game.id)
         .sum();
-    // dbg!(games);
+
+    let part_2: u32 = games
+        .iter()
+        .map(|game| {
+            let (r, g, b) = game.sets.iter().fold((0, 0, 0), |(ar, ag, ab), (r, g, b)| {
+                (ar.max(*r), ag.max(*g), ab.max(*b))
+            });
+            r * g * b
+        })
+        .sum();
     println!("{part_1}");
+    println!("{part_2}");
 }
