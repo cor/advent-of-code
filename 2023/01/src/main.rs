@@ -11,7 +11,7 @@ enum Direction {
 
 use Direction::{Left, Right};
 
-fn first_digit_1(line: &str, direction: Direction) -> Option<u32> {
+fn first_digit_1(line: &str, direction: &Direction) -> Option<u32> {
     let mut chars = line.chars();
     match direction {
         Left => chars.find(|c| c.is_numeric()),
@@ -20,7 +20,7 @@ fn first_digit_1(line: &str, direction: Direction) -> Option<u32> {
     .and_then(|c| c.to_digit(10))
 }
 
-fn first_digit_2(line: &str, direction: Direction) -> Option<u32> {
+fn first_digit_2(line: &str, direction: &Direction) -> Option<u32> {
     let digit_word_index = DIGIT_WORDS
         .map(|w| match direction {
             Left => line.find(w),
@@ -41,7 +41,7 @@ fn first_digit_2(line: &str, direction: Direction) -> Option<u32> {
             }
         });
 
-    let digit_word_value = digit_word_index.0 as u32 + 1; // offset const indices
+    let digit_word_value = u32::try_from(digit_word_index.0).ok()? + 1; // offset const indices
     let digit_word_index = digit_word_index.1;
 
     let digit_number_index = match direction {
@@ -51,7 +51,7 @@ fn first_digit_2(line: &str, direction: Direction) -> Option<u32> {
             number_index
                 .iter()
                 .rev()
-                .cloned()
+                .copied()
                 .find(|(_, c)| c.is_numeric())
         }
     };
@@ -68,9 +68,9 @@ fn first_digit_2(line: &str, direction: Direction) -> Option<u32> {
     }
 }
 
-fn calibration_value(line: &str, finder: fn(&str, Direction) -> Option<u32>) -> Option<u32> {
-    let left = finder(line, Left)?;
-    let right = finder(line, Right)?;
+fn calibration_value(line: &str, finder: fn(&str, &Direction) -> Option<u32>) -> Option<u32> {
+    let left = finder(line, &Left)?;
+    let right = finder(line, &Right)?;
     Some(left * 10 + right)
 }
 
