@@ -1,6 +1,38 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 
 use aoc_2023_common::challenge_input;
+
+#[derive(Debug)]
+struct Schematic {
+    fields: Vec<Vec<char>>,
+    width: i32,
+    height: i32,
+}
+
+impl FromStr for Schematic {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let fields: Vec<Vec<char>> = s.lines().map(|l| l.chars().collect()).collect();
+        let height = fields.len() as i32;
+        let width = fields.first().unwrap().len() as i32;
+        Ok(Schematic {
+            fields,
+            width,
+            height,
+        })
+    }
+}
+
+impl Schematic {
+    fn get_field(&self, index: (i32, i32)) -> Option<char> {
+        if index.0 >= 0 && index.0 < self.width && index.1 >= 0 && index.1 < self.height {
+            Some(self.fields[index.1 as usize][index.0 as usize])
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 struct PartNumber {
     number: usize,
@@ -12,22 +44,29 @@ struct PartNumber {
 enum PartType {
     Invalid,
     Part,
-    Gear(usize, usize),
+    Gear((i32, i32)),
 }
 
+const NEIGHBORS_DELTAS: [(i32, i32); 8] = [
+    (0, -1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+    (0, 1),
+    (-1, 1),
+    (-1, 0),
+    (-1, -1),
+];
+
 impl PartNumber {
-    fn is_valid(&self, schematic: &[Vec<char>], width: i32, height: i32) -> PartType {
+    fn typ(&self, schematic: &Schematic) -> PartType {
         for x in self.x.0..=self.x.1 {
-            for (dx, dy) in NEIGHBORS {
-                let new_x = x as i32 + dx;
-                let new_y = self.y as i32 + dy;
-                if new_x >= 0 && new_x < width && new_y >= 0 && new_y < height {
-                    let z = schematic[new_y as usize][new_x as usize];
-                    match z {
-                        '0'..='9' | '.' => {}
-                        '*' => return PartType::Gear(new_x as usize, new_y as usize),
-                        _ => return PartType::Part,
-                    }
+            for (dx, dy) in NEIGHBORS_DELTAS {
+                let neighbor = (x as i32 + dx, self.y as i32 + dy);
+                match schematic.get_field(neighbor) {
+                    Some('*') => return PartType::Gear(neighbor),
+                    Some('0'..='9' | '.') | None => {}
+                    _ => return PartType::Part,
                 }
             }
         }
@@ -35,10 +74,10 @@ impl PartNumber {
     }
 }
 
-fn find_part_numbers(schematic: &[Vec<char>]) -> Vec<PartNumber> {
+fn find_part_numbers(schematic: &Schematic) -> Vec<PartNumber> {
     let mut part_numbers: Vec<PartNumber> = Vec::new();
 
-    for (y, line) in schematic.iter().enumerate() {
+    for (y, line) in schematic.fields.iter().enumerate() {
         let mut char_iter = line.iter().enumerate();
         while let Some((x0, &char)) = char_iter.next() {
             if char.is_ascii_digit() {
@@ -56,47 +95,26 @@ fn find_part_numbers(schematic: &[Vec<char>]) -> Vec<PartNumber> {
                 });
             }
         }
-        println!();
     }
     part_numbers
 }
 
-const NEIGHBORS: [(i32, i32); 8] = [
-    (0, -1),
-    (1, -1),
-    (1, 0),
-    (1, 1),
-    (0, 1),
-    (-1, 1),
-    (-1, 0),
-    (-1, -1),
-];
-
 fn main() {
     let input = challenge_input();
-    let schematic: Vec<Vec<char>> = input.lines().map(|l| l.chars().collect()).collect();
+    let schematic = Schematic::from_str(&input).unwrap();
     let part_numbers = find_part_numbers(&schematic);
-    let height = schematic.len() as i32;
-    let width = schematic.first().unwrap().len() as i32;
     let part_1: usize = part_numbers
         .iter()
-        .filter(|part_number| {
-            !matches!(
-                part_number.is_valid(&schematic, width, height),
-                PartType::Invalid
-            )
-        })
+        .filter(|part_number| !matches!(part_number.typ(&schematic), PartType::Invalid))
         .map(|part| part.number)
         .sum();
 
     println!("{part_1}");
 
-    let mut gears = HashMap::new();
+    let mut gears: HashMap<(i32, i32), Vec<PartNumber>> = HashMap::new();
     for part in part_numbers {
-        if let PartType::Gear(x, y) = part.is_valid(&schematic, width, height) {
-            let point = (x, y);
-            let entry = gears.entry(point).or_insert(Vec::new());
-            entry.push(part);
+        if let PartType::Gear(field) = part.typ(&schematic) {
+            gears.entry(field).or_default().push(part);
         };
     }
 
