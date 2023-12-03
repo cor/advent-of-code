@@ -16,6 +16,25 @@ struct PartNumber {
     y: usize,
 }
 
+impl PartNumber {
+    fn is_valid(&self, schematic: &[Vec<char>], width: i32, height: i32) -> bool {
+        for x in self.x.0..=self.x.1 {
+            for (dx, dy) in NEIGHBORS {
+                let new_x = x as i32 + dx;
+                let new_y = self.y as i32 + dy;
+                if new_x >= 0 && new_x < width && new_y >= 0 && new_y < height {
+                    let z = schematic[new_y as usize][new_x as usize];
+                    match z {
+                        '0'..='9' | '.' => {}
+                        _ => return true,
+                    }
+                }
+            }
+        }
+        false
+    }
+}
+
 fn find_part_numbers(schematic: &[Vec<char>]) -> Vec<PartNumber> {
     let mut part_numbers: Vec<PartNumber> = Vec::new();
 
@@ -62,22 +81,7 @@ fn main() {
 
     let part_1: usize = part_numbers
         .iter()
-        .filter(|part_number| {
-            for x in part_number.x.0..=part_number.x.1 {
-                for (dx, dy) in NEIGHBORS {
-                    let new_x = x as i32 + dx;
-                    let new_y = part_number.y as i32 + dy;
-                    if new_x >= 0 && new_x < width && new_y >= 0 && new_y < height {
-                        let z = schematic[new_y as usize][new_x as usize];
-                        match z {
-                            '0'..='9' | '.' => {}
-                            _ => return true,
-                        }
-                    }
-                }
-            }
-            false
-        })
+        .filter(|part_number| part_number.is_valid(&schematic, width, height))
         .map(|part| part.number)
         .sum();
     println!("{part_1}");
