@@ -1,4 +1,5 @@
 use aoc_2023_common::challenge_input;
+use rayon::prelude::*;
 
 use nom::{
     bytes::complete::tag,
@@ -72,8 +73,11 @@ impl Card {
 fn main() {
     let input = challenge_input();
     let cards = Card::parse_many(&input).expect("Invalid input").1;
-    let points = cards.iter().map(|card| card.points()).sum::<u32>();
-    let points_2 = cards.iter().map(|card| card.points_2(&cards)).sum::<u32>();
+    let points = cards.par_iter().map(|card| card.points()).sum::<u32>();
+    let points_2 = cards
+        .par_iter()
+        .map(|card| card.points_2(&cards))
+        .sum::<u32>();
     println!("{points}");
     println!("{points_2}");
 }
