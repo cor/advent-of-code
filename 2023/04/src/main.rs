@@ -57,12 +57,23 @@ impl Card {
             n => 2u32.pow(n - 1),
         }
     }
+
+    pub fn points_2(&self, cards: &[Self]) -> u32 {
+        (self.id..=(self.id + self.win_count() - 1))
+            .map(|new_id| match cards.get(new_id as usize) {
+                None => 0,
+                Some(card) => card.points_2(cards),
+            })
+            .sum::<u32>()
+            + 1
+    }
 }
 
 fn main() {
     let input = challenge_input();
     let cards = Card::parse_many(&input).expect("Invalid input").1;
     let points = cards.iter().map(|card| card.points()).sum::<u32>();
-    dbg!(&cards);
+    let points_2 = cards.iter().map(|card| card.points_2(&cards)).sum::<u32>();
     println!("{points}");
+    println!("{points_2}");
 }
