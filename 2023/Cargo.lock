@@ -39,6 +39,7 @@ version = "0.1.0"
 dependencies = [
  "aoc-2023-common",
  "nom",
+ "rayon",
 ]
 
 [[package]]

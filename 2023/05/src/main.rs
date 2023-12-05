@@ -1,29 +1,30 @@
 use aoc_2023_common::challenge_input;
 use nom::{
     bytes::complete::{tag, take_till},
-    character::complete::{line_ending, newline, space1, u128},
+    character::complete::{line_ending, newline, space1, u64},
     combinator::map,
     multi::{separated_list0, separated_list1},
     sequence::{delimited, pair, preceded, separated_pair, tuple},
     IResult,
 };
+use rayon::prelude::*;
 
 #[derive(Debug)]
 struct Range {
-    destination_start: u128,
-    source_start: u128,
-    length: u128,
+    destination_start: u64,
+    source_start: u64,
+    length: u64,
 }
 
 #[derive(Debug)]
 struct Map {
-    name: String,
+    _name: String, // didn't need it but parsed just in case
     ranges: Vec<Range>,
 }
 
 #[derive(Debug)]
 struct Almanac {
-    seeds: Vec<u128>,
+    seeds: Vec<u64>,
     maps: Vec<Map>,
 }
 
@@ -31,7 +32,7 @@ impl Almanac {
     pub fn parse(input: &str) -> IResult<&str, Self> {
         map(
             tuple((
-                (delimited(tag("seeds: "), separated_list0(space1, u128), newline)),
+                (delimited(tag("seeds: "), separated_list0(space1, u64), newline)),
                 preceded(
                     newline,
                     separated_list1(pair(line_ending, line_ending), Map::parse),
@@ -41,7 +42,7 @@ impl Almanac {
         )(input)
     }
 
-    pub fn destination(&self, seed: u128) -> u128 {
+    pub fn destination(&self, seed: u64) -> u64 {
         let mut seed = seed;
 
         for map in &self.maps {
@@ -60,13 +61,13 @@ impl Map {
                 separated_list1(newline, Range::parse),
             ),
             |(name, ranges)| Self {
-                name: name.to_string(),
+                _name: name.to_string(),
                 ranges,
             },
         )(input)
     }
 
-    pub fn destination(&self, input: u128) -> u128 {
+    pub fn destination(&self, input: u64) -> u64 {
         for range in &self.ranges {
             if let Some(destination) = range.destination(input) {
                 return destination;
@@ -79,7 +80,7 @@ impl Map {
 impl Range {
     pub fn parse(input: &str) -> IResult<&str, Self> {
         map(
-            tuple((u128, preceded(space1, u128), preceded(space1, u128))),
+            tuple((u64, preceded(space1, u64), preceded(space1, u64))),
             |(destination_start, source_start, length)| Self {
                 destination_start,
                 source_start,
@@ -88,11 +89,11 @@ impl Range {
         )(input)
     }
 
-    fn includes(&self, input: u128) -> bool {
+    fn includes(&self, input: u64) -> bool {
         input >= self.source_start && input < (self.source_start + self.length)
     }
 
-    pub fn destination(&self, input: u128) -> Option<u128> {
+    pub fn destination(&self, input: u64) -> Option<u64> {
         if !self.includes(input) {
             return None;
         }
@@ -104,12 +105,32 @@ impl Range {
 fn main() {
     let input = challenge_input();
     let almanac = Almanac::parse(&input).expect("Invalid input").1;
-    let destinations = almanac
+    let part_1 = &almanac
         .seeds
         .iter()
         .map(|&seed| almanac.destination(seed))
         .min()
         .expect("There should be an answer");
-    println!("{destinations:#?}");
-    // println!("{almanac:#?}");
+
+    println!("{part_1}");
+
+    let seed_ranges = &almanac
+        .seeds
+        .chunks_exact(2)
+        .map(|chunk| (chunk[0], chunk[1]))
+        .collect::<Vec<_>>();
+
+    let part_2 = seed_ranges
+        .par_iter()
+        .map(|(start, length)| {
+            (*start..(start + length))
+                .into_par_iter()
+                .map(|seed| almanac.destination(seed))
+                .min()
+                .expect("should be a min dest")
+        })
+        .min()
+        .expect("should be a min dest");
+
+    println!("{part_2}");
 }
