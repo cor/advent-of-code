@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 aoc-2023-common = { path = "../common/" }
+num = "0.4.1"
+rayon = "1.8.0"

@@ -1,3 +1,5 @@
+use num::integer::lcm;
+use rayon::prelude::*;
 use std::collections::HashMap;
 
 use aoc_2023_common::challenge_input;
@@ -54,8 +56,8 @@ impl Map {
         }
     }
 
-    fn step_count(&self) -> usize {
-        let mut node: Node = ['A', 'A', 'A'];
+    fn step_count(&self, start_node: Node) -> usize {
+        let mut node: Node = start_node;
 
         for step_count in 0.. {
             let instruction = &self.instructions[step_count % self.instructions.len()];
@@ -64,7 +66,7 @@ impl Map {
                 Instruction::Left => node = *left,
                 Instruction::Right => node = *right,
             }
-            if node == TARGET_NODE {
+            if matches!(node, [_, _, 'Z']) {
                 return step_count + 1;
             }
         }
@@ -114,6 +116,19 @@ impl Instruction {
 fn main() {
     let input = challenge_input();
     let map = Map::parse(&input);
-    println!("{}", map.step_count());
-    println!("{}", map.step_count_2());
+    println!("{}", map.step_count(['A', 'A', 'A']));
+
+    let start_nodes: Vec<&Node> = map
+        .network
+        .keys()
+        .filter(|key| matches!(key, [_, _, 'A']))
+        .collect();
+
+    let step_count_2: Vec<usize> = start_nodes
+        .par_iter()
+        .map(|&&node| map.step_count(node))
+        .collect();
+
+    let part_2 = step_count_2.iter().cloned().reduce(lcm).unwrap();
+    println!("{}", part_2);
 }
