@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 aoc-2023-common = { path = "../common/" }
+colored = "2.1.0"
