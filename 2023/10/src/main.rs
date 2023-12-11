@@ -167,34 +167,6 @@ impl Map {
         panic!("no start point");
     }
 
-    fn print_with_path(&self, path: &HashSet<Point>) {
-        for (y, row) in self.tiles.iter().enumerate() {
-            for (x, tile) in row.iter().enumerate() {
-                let char = match tile {
-                    Pipe(EastWest) => '━',
-                    Pipe(NorthSouth) => '┃',
-                    Pipe(SouthEast) => '┏',
-                    Pipe(SouthWest) => '┓',
-                    Pipe(NorthEast) => '┗',
-                    Pipe(NorthWest) => '┛',
-                    Start => 'S',
-                    Ground => '.',
-                };
-
-                let point = Point {
-                    x: x as i16,
-                    y: y as i16,
-                };
-                if path.contains(&point) {
-                    print!("{}", char.to_string().green());
-                } else {
-                    print!("{}", char);
-                }
-            }
-            println!();
-        }
-    }
-
     fn print_with_path_and_floods(
         &self,
         path: &HashSet<Point>,
@@ -218,6 +190,7 @@ impl Map {
                     x: x as i16,
                     y: y as i16,
                 };
+
                 if path.contains(&point) {
                     print!("{}", char.to_string().green());
                 } else if left_flood.contains(&point) {
@@ -260,6 +233,7 @@ fn flood_fill(path: &HashSet<Point>, start: Point) -> Option<HashSet<Point>> {
     let mut latest = HashSet::new();
 
     if path.contains(&start) {
+        // We're attempting to flood on the path, return an empty flood
         return Some(HashSet::new());
     }
 
@@ -282,107 +256,107 @@ fn flood_fill(path: &HashSet<Point>, start: Point) -> Option<HashSet<Point>> {
         latest = new;
     }
 
-    // If after 100 cycles we are still expanding, it's the wrong side
+    // If after 50 cycles we are still expanding, it's the wrong side
     None
 }
 
-const START_DIR: Direction = West;
+// Hardcoded because I didn't bother to check what the start direction is algorithmically.
+const START_DIR: Direction = North;
 
 fn main() {
     let input = challenge_input();
     let map = Map::parse(&input);
     let start = map.start_point();
+
+    // PART 1: Determine the path length and create the path set
+    // ---------------------------------------------------------
+
     let mut current_point = start;
     let mut current_dir = START_DIR;
-
     let mut path_set: HashSet<Point> = HashSet::new();
 
     path_set.insert(start);
-    for i in 0.. {
+    loop {
         current_point = current_point + current_dir;
         path_set.insert(current_point);
-        let tile = map.get(&current_point);
-
-        if let Pipe(pt) = tile {
-            let (dir1, dir2) = pt.directions();
-            current_dir = if current_dir.inverse() == dir1 {
-                dir2
-            } else {
-                dir1
-            };
-        } else {
-            println!("{}", (i + 1) / 2);
-            break;
+        match map.get(&current_point) {
+            Pipe(pipe_type) => {
+                let (dir1, dir2) = pipe_type.directions();
+                current_dir = if current_dir.inverse() == dir1 {
+                    dir2
+                } else {
+                    dir1
+                };
+            }
+            Start => break,
+            Ground => panic!("hit the ground while traversing path"),
         }
-        // map.print_with_path(&path_set);
     }
 
-    // PART 2
-    //------------------------
+    let part_1 = (path_set.len() + 1) / 2;
+
+    // PART 2: Flood both sides to determine surface area within the loop
+    // ------------------------------------------------------------------
 
     let mut current_point = start;
     let mut current_dir = START_DIR;
+    let mut left_floods: HashSet<Point> = HashSet::new();
+    let mut right_floods: HashSet<Point> = HashSet::new();
 
-    let mut left_set: HashSet<Point> = HashSet::new();
-    let mut right_set: HashSet<Point> = HashSet::new();
+    enum OverflowSide {
+        Left,
+        Right,
+    }
+    let mut overflow_side: Option<OverflowSide> = None;
 
     loop {
         let left = current_point + current_dir.left();
         let right = current_point + current_dir.right();
+        let left_next = current_point + current_dir + current_dir.left();
+        let right_next = current_point + current_dir + current_dir.right();
 
-        if let Some(set) = flood_fill(&path_set, left) {
-            left_set.extend(set)
-        } else {
-            println!("left flooded");
+        match flood_fill(&path_set, left) {
+            Some(flood) => left_floods.extend(flood),
+            None => overflow_side = Some(OverflowSide::Left),
         }
 
-        if let Some(set) = flood_fill(&path_set, right) {
-            right_set.extend(set)
-        } else {
-            println!("right flooded");
+        match flood_fill(&path_set, right) {
+            Some(flood) => right_floods.extend(flood),
+            None => overflow_side = Some(OverflowSide::Right),
         }
 
-        let left = current_point + current_dir + current_dir.left();
-        let right = current_point + current_dir + current_dir.right();
-
-        if let Some(set) = flood_fill(&path_set, left) {
-            left_set.extend(set)
-        } else {
-            println!("left flooded");
+        match flood_fill(&path_set, left_next) {
+            Some(flood) => left_floods.extend(flood),
+            None => overflow_side = Some(OverflowSide::Left),
         }
 
-        if let Some(set) = flood_fill(&path_set, right) {
-            right_set.extend(set)
-        } else {
-            println!("right flooded");
+        match flood_fill(&path_set, right_next) {
+            Some(flood) => right_floods.extend(flood),
+            None => overflow_side = Some(OverflowSide::Right),
         }
 
         current_point = current_point + current_dir;
 
-        let tile = map.get(&current_point);
-
-        if let Pipe(pt) = tile {
-            let (dir1, dir2) = pt.directions();
-            current_dir = if current_dir.inverse() == dir1 {
-                dir2
-            } else {
-                dir1
-            };
-        } else {
-            break;
+        match map.get(&current_point) {
+            Pipe(pipe_type) => {
+                let (dir1, dir2) = pipe_type.directions();
+                current_dir = if current_dir.inverse() == dir1 {
+                    dir2
+                } else {
+                    dir1
+                };
+            }
+            Start => break,
+            Ground => panic!("hit the ground while traversing path"),
         }
-        // map.print_with_path_and_floods(&path_set, &left_set, &right_set);
     }
 
-    map.print_with_path_and_floods(&path_set, &left_set, &right_set);
+    map.print_with_path_and_floods(&path_set, &left_floods, &right_floods);
 
-    // sanity checks
-    dbg!(left_set.intersection(&right_set).collect::<HashSet<_>>());
-    dbg!(left_set.intersection(&path_set).collect::<HashSet<_>>());
-    dbg!(right_set.intersection(&path_set).collect::<HashSet<_>>());
-
-    dbg!(left_set.len());
-    dbg!(right_set.len());
-    // dbg!(right_set);
-    // dbg!(path_set);
+    println!("{}", part_1);
+    match overflow_side {
+        Some(OverflowSide::Left) => println!("{}", right_floods.len()),
+        Some(OverflowSide::Right) => println!("{}", left_floods.len()),
+        None => panic!("Neither side overflowed, can't determine inside of loop"),
+    }
 }
