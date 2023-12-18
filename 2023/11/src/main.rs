@@ -1,9 +1,10 @@
 use aoc_2023_common::challenge_input;
 
-#[derive(Clone)]
-struct Universe(Vec<(usize, usize)>);
-struct ExpandedUniverse<const E: usize>(Vec<(usize, usize)>);
 type UniverseMatrix = Vec<Vec<bool>>;
+type Coordinate = (usize, usize);
+#[derive(Clone)]
+struct Universe(Vec<Coordinate>);
+struct ExpandedUniverse<const E: usize>(Vec<Coordinate>);
 
 impl From<UniverseMatrix> for Universe {
     fn from(universe: UniverseMatrix) -> Self {
@@ -58,18 +59,13 @@ impl<const E: usize> ExpandedUniverse<E> {
     fn distances(&self) -> usize {
         self.0
             .iter()
-            .flat_map(|a| {
-                self.0
-                    .iter()
-                    .map(|b| manhattan_distance(a, b))
-                    .collect::<Vec<_>>()
-            })
+            .flat_map(|a| self.0.iter().map(|b| distance(a, b)).collect::<Vec<_>>())
             .sum::<usize>()
             / 2
     }
 }
 
-fn manhattan_distance(a: &(usize, usize), b: &(usize, usize)) -> usize {
+fn distance(a: &Coordinate, b: &Coordinate) -> usize {
     a.0.abs_diff(b.0) + a.1.abs_diff(b.1)
 }
 
