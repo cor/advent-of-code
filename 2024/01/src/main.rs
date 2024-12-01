@@ -5,11 +5,8 @@ fn main() {
     let (mut left, mut right): (Vec<isize>, Vec<isize>) = input
         .lines()
         .map(|l| {
-            let mut iter = l.split_whitespace();
-            (
-                iter.next().unwrap().parse::<isize>().unwrap(),
-                iter.next().unwrap().parse::<isize>().unwrap(),
-            )
+            let (l, r) = l.split_once("   ").unwrap();
+            (l.parse::<isize>().unwrap(), r.parse::<isize>().unwrap())
         })
         .unzip();
     left.sort();
