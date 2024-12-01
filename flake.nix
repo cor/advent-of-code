@@ -27,6 +27,33 @@
           days2023 = map (pkgs.lib.fixedWidthNumber 2) (pkgs.lib.range 1 1);
         in {
           packages = {
+            new-day = pkgs.writeShellApplication {
+                  name = "new-day";
+                  runtimeInputs = [ self'.packages.rust-stable ];
+                  text = ''
+                    cd "$1"
+                    cargo new "$2" --name="aoc-$1-$2"
+
+                    echo "aoc-$1-common = { path = \"../common/\" }" >> ./"$2"/Cargo.toml
+
+                    mkdir "$2"/input
+
+                    touch "$2"/input/example.txt
+                    touch "$2"/input/1.txt
+
+                    echo "use aoc_$1_common::challenge_input;
+
+                    fn main() {
+                        let input = challenge_input();
+                        println!(\"{input}\");
+                    }" > ./"$2"/src/main.rs
+
+                    echo "Cargo project created!";
+                    echo "You should add $2 to ./$1/Cargo.toml";
+                    echo "and also add $2 to days in ./flake.nix";
+                  '';
+                };
+
             rust-stable = inputs'.rust-overlay.packages.rust.override {
               extensions = [ "rust-src" "rust-analyzer" "clippy" ];
             };
@@ -63,42 +90,10 @@
             };
 
           }) days2023));
-            apps = {
-              new-day = {
-                type = "app";
-                program = pkgs.writeShellApplication {
-                  name = "new-day";
-                  runtimeInputs = [ self'.packages.rust-stable ];
-                  text = ''
-                    cd "$1"
-                    cargo new "$2" --name="aoc-$1-$2"
-
-                    echo "aoc-$1-common = { path = \"../common/\" }" >> ./"$2"/Cargo.toml
-
-                    mkdir "$2"/input
-
-                    touch "$2"/input/example.txt
-                    touch "$2"/input/1.txt
-
-                    echo "use aoc_$1_common::challenge_input;
-
-                    fn main() {
-                        let input = challenge_input();
-                        println!(\"{input}\");
-                    }" > ./"$2"/src/main.rs
-
-                    echo "Cargo project created!";
-                    echo "You should add $2 to ./$1/Cargo.toml";
-                    echo "and also add $2 to days in ./flake.nix";
-                  '';
-                };
-
-              };
-            };
           devShells = {
             default = pkgs.mkShell {
-              buildInputs = [ self'.packages.rust-stable ]
-                ++ (with pkgs; [ bacon rnix-lsp hyperfine cargo-flamegraph lldb llvmPackages_14.llvm ]);
+              buildInputs = [ self'.packages.rust-stable self'.packages.new-day ]
+                ++ (with pkgs; [ bacon nil hyperfine cargo-flamegraph lldb llvmPackages_14.llvm ]);
             };
           };
         };
