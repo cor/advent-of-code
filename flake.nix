@@ -20,11 +20,12 @@
       perSystem = { config, self', inputs', pkgs, system, ... }:
         let
           crane = rec {
-            lib = self.inputs.crane.lib.${system};
+            lib = self.inputs.crane.mkLib pkgs;
             stable = lib.overrideToolchain self'.packages.rust-stable;
           };
           days = map (pkgs.lib.fixedWidthNumber 2) (pkgs.lib.range 1 15);
-          days2023 = map (pkgs.lib.fixedWidthNumber 2) (pkgs.lib.range 1 1);
+          days2023 = map (pkgs.lib.fixedWidthNumber 2) (pkgs.lib.range 1 11);
+          days2024 = map (pkgs.lib.fixedWidthNumber 2) (pkgs.lib.range 1 1);
         in {
           packages = {
             new-day = pkgs.writeShellApplication {
@@ -89,7 +90,26 @@
               '';
             };
 
-          }) days2023));
+          }) days2023))
+          // (builtins.listToAttrs (map (day: {
+            name = "2024-${day}";
+            value = let
+              build = let pname = "aoc-2024-${day}"; in crane.stable.buildPackage {
+                src = ./2024;
+                cargoBuildCommand = "cargo build --release -p ${pname}";
+                version = "0.1.0";
+                inherit pname;
+              };
+            in pkgs.writeShellApplication {
+              name = "aoc-2024-${day}";
+              text = ''
+                ${build}/bin/aoc-2024-${day} "$@"
+              '';
+            };
+
+          }) days2024));
+
+
           devShells = {
             default = pkgs.mkShell {
               buildInputs = [ self'.packages.rust-stable self'.packages.new-day ]
