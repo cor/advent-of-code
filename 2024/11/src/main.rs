@@ -26,7 +26,6 @@ fn count_after_blinks(stone: u64, blinks: u64) -> u64 {
     count_after_blinks(left, blinks - 1) + right.map_or(0, |s| count_after_blinks(s, blinks-1))
 }
 
-#[inline(always)]
 fn blink(stone: u64) -> (u64, Option<u64>) {
     if stone == 0 {
         return (1, None);
