@@ -45,6 +45,15 @@ impl Map {
             }
         }
     }
+
+    fn gps_coordinate_sum(&self) -> usize {
+        self.tiles
+            .map_with_location(|row, col, tile| match tile {
+                Box => row * 100 + col,
+                _ => 0,
+            })
+            .sum()
+    }
 }
 
 impl Display for Map {
@@ -104,7 +113,6 @@ use Tile::*;
 
 fn main() {
     let input = challenge_input();
-    println!("{input}");
     let (map_str, instructions) = input.split_once("\n\n").unwrap();
     let mut map: Map = map_str.into();
 
@@ -114,10 +122,12 @@ fn main() {
             '^' => map.push((-1, 0)),
             '<' => map.push((0, -1)),
             'v' => map.push((1, 0)),
-            _ => panic!("invalid instruction"),
+            '\n' => (),
+            _ => println!("end of simulation"),
         }
-        println!("{map}");
+        // println!("{map}");
     }
+    println!("{}", map.gps_coordinate_sum())
     // println!("{map}");
     // map.push_right();
     // println!("{map}");
