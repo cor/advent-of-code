@@ -11,29 +11,34 @@ struct Map {
 }
 
 impl Map {
-    fn push_right(&mut self) {
-        let (y, x) = self.player;
-        let point_right = (y, x + 1);
+    fn push(&mut self, direction: (isize, isize)) {
+        let player_neighbor = (
+            (self.player.0 as isize + direction.0) as usize,
+            (self.player.1 as isize + direction.1) as usize,
+        );
 
-        match self.tiles[point_right] {
+        match self.tiles[player_neighbor] {
             Wall => return,
             Empty => {
-                self.player = point_right;
+                self.player = player_neighbor;
                 return;
             }
             Box => (),
         };
 
-        let mut current_point = point_right;
+        let mut current_point = player_neighbor;
         loop {
-            current_point.1 += 1;
+            current_point = (
+                (current_point.0 as isize + direction.0) as usize,
+                (current_point.1 as isize + direction.1) as usize,
+            );
             match self.tiles[current_point] {
                 Wall => return, // hit a wall, no box/player moving
                 Empty => {
                     // empty, "move" the boxes by swapping point_right and current_point
                     self.tiles[current_point] = Box;
-                    self.tiles[point_right] = Empty;
-                    self.player = point_right;
+                    self.tiles[player_neighbor] = Empty;
+                    self.player = player_neighbor;
                     return;
                 }
                 Box => continue, // we keep looking for wall/empty
@@ -102,13 +107,24 @@ fn main() {
     println!("{input}");
     let (map_str, instructions) = input.split_once("\n\n").unwrap();
     let mut map: Map = map_str.into();
-    println!("{map}");
-    map.push_right();
-    println!("{map}");
-    map.push_right();
-    println!("{map}");
-    map.push_right();
-    println!("{map}");
-    map.push_right();
-    println!("{map}");
+
+    for instr in instructions.chars() {
+        match instr {
+            '>' => map.push((0, 1)),
+            '^' => map.push((-1, 0)),
+            '<' => map.push((0, -1)),
+            'v' => map.push((1, 0)),
+            _ => panic!("invalid instruction"),
+        }
+        println!("{map}");
+    }
+    // println!("{map}");
+    // map.push_right();
+    // println!("{map}");
+    // map.push_right();
+    // println!("{map}");
+    // map.push_right();
+    // println!("{map}");
+    // map.push_right();
+    // println!("{map}");
 }
