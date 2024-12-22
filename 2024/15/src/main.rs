@@ -125,16 +125,6 @@ fn main() {
             '\n' => (),
             _ => println!("end of simulation"),
         }
-        // println!("{map}");
     }
     println!("{}", map.gps_coordinate_sum())
-    // println!("{map}");
-    // map.push_right();
-    // println!("{map}");
-    // map.push_right();
-    // println!("{map}");
-    // map.push_right();
-    // println!("{map}");
-    // map.push_right();
-    // println!("{map}");
 }
